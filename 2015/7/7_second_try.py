@@ -70,6 +70,7 @@ def calculate(wire, input_dict, results_dict):
         return 'XX'
     
 input_dict = read_file_into_memory(filename)
+input_dict['b'] = '46065'
 results_dict = {}
 
 #for key, value in input_dict.items():
