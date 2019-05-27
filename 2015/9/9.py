@@ -24,6 +24,7 @@ location_orders = list(itertools.permutations(location_list))
 print(location_orders[0])
 
 distance_min = 999
+distance_max = 0
 for order in location_orders:
     distance = 0
     for i in range(len(order) - 1):
@@ -34,5 +35,8 @@ for order in location_orders:
                     distance = distance + int(data[2])
     if distance < distance_min:
         distance_min = distance
+    if distance > distance_max:
+        distance_max = distance
         
-print(distance_min)
+print('min distance', distance_min)
+print('max distance', distance_max)
