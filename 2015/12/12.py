@@ -1,21 +1,32 @@
-import re
+import json
 
 string = open('input.txt', 'r').readlines()[0]
-print(string, '\n\n\n\n')
+json_object = json.loads(string)
 
-all_the_numbers = sum(list(map(int, re.findall(r'-?\d+', string))))
-print('all the numbers = ', all_the_numbers)
+# json_object = [33, 2]
 
-# red_bits = re.findall(r'\{[^[\}\[]*\"red\"[^\}]*\}', string)
-red_bits = re.findall(r'\{[^\}]*\:\"red\"[^\}]*\}', string)
+def look_at_item(json_object):
 
-numbers_with_red = 0
-for string in red_bits:
-    print(string)
-    numbers_with_red = numbers_with_red + sum(list(map(int, re.findall(r'-?\d+', string))))
+    if type(json_object) == type(dict()):
+        
+        # do this sum function for each element
+        return sum(map(look_at_item, json_object.values()))
+        
+    elif type(json_object) == type(list()):
+        
+        # do this sum function for each element
+        return sum(map(look_at_item, json_object))
+  
+    else:
+        
+        # do this sum function for the single element
+        if type(json_object) == type(0):
+            return json_object # an int
+        else:
+            return 0
+        
+print(look_at_item(json_object))
 
-print('numbers with red', numbers_with_red)
-print('good numbers = ', all_the_numbers - numbers_with_red)
 
 # 96196 too high
 # 90737 too high
