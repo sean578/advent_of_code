@@ -3,19 +3,20 @@ import json
 string = open('input.txt', 'r').readlines()[0]
 json_object = json.loads(string)
 
-# json_object = [33, 2]
-
-def look_at_item(json_object):
+def sum_fn(json_object):
 
     if type(json_object) == type(dict()):
         
-        # do this sum function for each element
-        return sum(map(look_at_item, json_object.values()))
+        if "red" in json_object.values():
+            return 0
+        else:
+            # do this sum function for each element
+            return sum(map(sum_fn, json_object.values()))
         
     elif type(json_object) == type(list()):
         
         # do this sum function for each element
-        return sum(map(look_at_item, json_object))
+        return sum(map(sum_fn, json_object))
   
     else:
         
@@ -25,8 +26,7 @@ def look_at_item(json_object):
         else:
             return 0
         
-print(look_at_item(json_object))
-
+print(sum_fn(json_object))
 
 # 96196 too high
 # 90737 too high
