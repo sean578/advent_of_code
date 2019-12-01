@@ -74,14 +74,3 @@ print(len(set(molecules_out)))
 
 
 
-
-# print('testing find function')
-# string = 'hello'
-# substring = 'll'
-# replacement = 'pop'
-#
-# for index in find_indices_of_match(substring, string):
-#     print(replace_substring(string, index, replacement, len(substring)))
-
-
-
