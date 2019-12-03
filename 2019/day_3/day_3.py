@@ -16,7 +16,7 @@ for i, wire in enumerate(wire_instructions_file.readlines()):
 
 
 def find_all_coords(instructions):
-    """Loop through the instructions and add append each new coordinate to a list
+    """Loop through the instructions and append each new coordinate to a list
     """
     coords = []
     current_index = [0, 0]
@@ -56,6 +56,7 @@ def find_all_coords(instructions):
 coords_0 = [tuple(x) for x in find_all_coords(instructions[0])]
 coords_1 = [tuple(x) for x in find_all_coords(instructions[1])]
 intersections = list(set(coords_0).intersection(coords_1))
+print('Intersections\n', intersections)
 
 man_dists = []
 for intersection in intersections:
@@ -63,4 +64,14 @@ for intersection in intersections:
 
 man_dists.remove(0) # Don't count an intersection at the origin
 
-print(min(man_dists))
+print('Min Manhattan distance\n', min(man_dists))
+
+# Get the number of steps required for each intersection
+# num steps is the index in coords
+
+steps_for_intersections = []
+for intersection in intersections:
+    steps_for_intersections.append(coords_0.index(intersection) + coords_1.index(intersection))
+steps_for_intersections.remove(0)
+
+print('Min total steps\n', min(steps_for_intersections))
