@@ -39,7 +39,7 @@ def parse_program(program):
     return program
 
 
-program = np.loadtxt('input.txt', delimiter=',', dtype=np.int32)
+program = np.loadtxt('day_2.txt', delimiter=',', dtype=np.int32)
 
 for noun in range(100):
     for verb in range(100):

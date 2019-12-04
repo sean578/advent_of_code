@@ -20,7 +20,7 @@ while not done:
     fuel[indicies_below_zero] = 0  # Set fuels below zero to zero
 
     total_fuel = total_fuel + fuel
-    done = not np.all(fuel >0)  # If all new fuel calcs are zero we are done
+    done = not np.all(fuel > 0)  # If all new fuel calcs are zero we are done
 
 print(np.sum(total_fuel))
 
