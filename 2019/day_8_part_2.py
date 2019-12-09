@@ -19,17 +19,21 @@ for layer in range(num_layers):
 layers = np.array(layers, dtype=np.int8).reshape(num_layers, *layer_shape)
 print(layers.shape)
 
-uncoded_image = np.zeros(layers.shape[1:])
-for y in range(layers.shape[1]):
-    for x in range(layers.shape[2]):
-        z = 0
-        while True:
-            pixel = layers[z, y, x]
-            if pixel == 2:
-                z += 1
-            else:
-                uncoded_image[y, x] = pixel
-                break
+uncoded_image = np.ones(layer_shape)
+
+for layer in layers:
+    np.copyto(uncoded_image, layer, where=(layer == 0))
+
+# for y in range(layers.shape[1]):
+#     for x in range(layers.shape[2]):
+#         z = 0
+#         while True:
+#             pixel = layers[z, y, x]
+#             if pixel == 2:
+#                 z += 1
+#             else:
+#                 uncoded_image[y, x] = pixel
+#                 break
 
 plt.imshow(uncoded_image, cmap='gray')
 plt.show()
