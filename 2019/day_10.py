@@ -33,25 +33,23 @@ for x, y in product(range(x_max), range(y_max)):
 
         # Loop through and check if blocked
         hcf = math.gcd(x_rel, y_rel)
-        step_x = x_rel//hcf
-        step_y = y_rel//hcf
+        step_x = x_rel // hcf
+        step_y = y_rel // hcf
         x_check = step_x + x_rel + x
         y_check = step_y + y_rel + y
 
         while(x_check >= x_min) \
                 and (x_check < x_max) \
                 and (y_check >= y_min) \
-                and (y_check < y_max) \
-                and a_map[y_check, x_check]:
-            # print('blocked...\t', y_check, x_check)
-            blocked[x_check, y_check] = 1
+                and (y_check < y_max):
+
+            if a_map[y_check, x_check]:
+                blocked[x_check, y_check] = 1
             # multiplier += 1
-            x_check += step_x  # multiplier * x_rel + x
-            y_check += step_y  # multiplier * y_rel + y
+            x_check += step_x
+            y_check += step_y
 
-
-    # print(int(total_num_asteroids - np.sum(blocked) - 1))
     num_asteroids_seen[y, x] = int(total_num_asteroids - np.sum(blocked) - 1)
 
-print(num_asteroids_seen)
+print(np.max(num_asteroids_seen))
 
