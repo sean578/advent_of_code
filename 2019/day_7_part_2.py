@@ -23,6 +23,7 @@ def command(mem, program_input, stop_on_input=False):
         increment = True
 
         opcode, modes = parse_mode_opcode(mem['memory'][mem['addr']])
+        print(opcode, modes)
         if opcode == 99:
             return 99
 

@@ -1,8 +1,8 @@
 from intcode_day_11 import IntCode
 
 
-def valid_phase_generator(max_value):
-    for i in range(max_value+1):
+def valid_phase_generator(min_value, max_value):
+    for i in range(min_value, max_value+1):
         i_string = str(i).zfill(5)
         i_ints = [int(x) for x in i_string]
         if max(i_ints) <= 4:
@@ -16,15 +16,12 @@ def print_input_output_values(intcode_machines):
         print(amp.input_values, amp.output_values)
 
 
-valid_phase_gen = valid_phase_generator(44444)
+valid_phase_gen = valid_phase_generator(00000, 44444)
 
 NUM_AMPS = 5
 amp_out_max = 0
 best_phase_settings = None
 for phase_settings in valid_phase_gen:
-
-    # phase_settings = [1, 3, 2, 1, 0]
-    # print('phase settings', phase_settings)
 
     intcode_machines = []
     for amp in range(NUM_AMPS):
