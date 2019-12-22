@@ -1,11 +1,14 @@
 from intcode_day_15 import IntCode
 import numpy as np
+np.set_printoptions(threshold=np.inf, linewidth=1000)
+
+from random import randint
 
 
 def initialise_maze(size):
     maze = np.zeros((size, size), dtype=np.int8)
     current_loc = [size // 2, size // 2]  # y, x
-    maze[current_loc[0], current_loc[1]] = 3  # 3 is current location
+    maze[current_loc[0], current_loc[1]] = 9  # 9 is current location
     return maze, current_loc
 
 
@@ -17,7 +20,10 @@ def update_map(maze, current_loc, direction, direction_dict, status, status_code
 
     if status_codes[status] == 'finished':
         print('Program complete')
-        return maze, current_loc
+        return maze, current_loc, True
+    elif status_codes[status] == 'found_oxygen':
+        print('Found oxygen')
+        return maze, current_loc, True
 
     if direction_dict[direction] == 'north':
         new_loc[0] = current_loc[0] - 1
@@ -36,15 +42,14 @@ def update_map(maze, current_loc, direction, direction_dict, status, status_code
     # If moving then change droid location
     if status_codes[status] != 'hit_wall':
         maze[current_loc[0], current_loc[1]] = 2  # droid has been here
-        maze[new_loc[0], new_loc[1]] = 3  # Location of the droid
+        maze[new_loc[0], new_loc[1]] = 9  # Location of the droid
     else:
         maze[new_loc[0], new_loc[1]] = status + 1
 
     if status_codes[status] == 'hit_wall':
-        print('hit wall')
-        return maze, current_loc
+        return maze, current_loc, False
     else:
-        return maze, new_loc
+        return maze, new_loc, False
 
 
 direction_dict = {
@@ -65,34 +70,34 @@ status_codes = {
 program = IntCode('day_15.txt')
 
 # Initialise a map of the maze
-maze, current_loc = initialise_maze(15)
+maze, current_loc = initialise_maze(50)
 
 direction = 0  # intitial direction
 status = 0
-# while status_codes[status] != 'finished':
-# for _ in range(15):
+
+i=0
 while True:
-    direction = int(input('Direction...'))
+    # print(i)
+    # direction = int(input('Direction...'))
+    direction = randint(0, 3)
+    # print(direction)
+
     program.input_values.append(direction+1)  # Provide an input instruction
-    print(direction_dict[direction])
     program.command()  # Get program to move droid
-    # if len(program.input_values) > 0:
-    #     raise Exception('Not used all input values')
-    # print('output', program.output_values)
     status = program.output_values.pop(0)  # Get the status of the repair droid
-    # if len(program.output_values) > 0:
-    #     if program.output_values.pop(0) == 99:
-    #         break
-    #     else:
-    #         raise Exception('Not used all output values')
-    maze, current_loc = update_map(maze,
+    maze, current_loc, found = update_map(maze,
                                    current_loc,
                                    direction,
                                    direction_dict,
                                    status,
                                    status_codes)
-    # print(status_codes[status])
+    if i % 10000 == 0:
+        np.save('maze', maze)
 
+    if found:
+        np.save('maze', maze)
+        break
 
-    print(maze)
+    i += 1
+    #print(maze)
 
