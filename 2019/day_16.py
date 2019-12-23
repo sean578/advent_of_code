@@ -1,7 +1,6 @@
 import math
 
 
-# Todo: Need to create an offset in this?
 def create_pattern(base_pattern, repeats):
 
     new_pattern = []
