@@ -34,7 +34,7 @@ def load_input(filename):
     return input
 
 
-def numbers_that_sum_to_target(input, target):
+def two_numbers_that_sum_to_target(input, target):
     num_inputs = len(input)
     for i in range(num_inputs):
         for j in range(i, num_inputs):
@@ -42,12 +42,21 @@ def numbers_that_sum_to_target(input, target):
                 return (input[i], input[j], input[i]*input[j])
 
 
+def three_numbers_that_sum_to_target(input, target):
+    num_inputs = len(input)
+    for i in range(num_inputs):
+        for j in range(i, num_inputs):
+            for k in range(j, num_inputs):
+                if input[i] + input[j] + input[k] == target:
+                    return (input[i], input[j], input[k], input[i]*input[j]*input[k])
+
+
 if __name__ == '__main__':
 
-    # input = [1721, 979, 366, 299, 675, 1456]
+    input = [1721, 979, 366, 299, 675, 1456]
 
     input = load_input('day_1.txt')
     target = 2020
 
-    answer = numbers_that_sum_to_target(input, target)
+    answer = three_numbers_that_sum_to_target(input, target)
     print(answer)
