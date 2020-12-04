@@ -18,6 +18,20 @@ Each line gives the password policy and then the password. The password policy i
 In the above example, 2 passwords are valid. The middle password, cdefg, is not; it contains no instances of b, but needs at least 1. The first and third passwords are valid: they contain one a or nine c, both within the limits of their respective policies.
 
 How many passwords are valid according to their policies?
+
+--- Part Two ---
+While it appears you validated the passwords correctly, they don't seem to be what the Official Toboggan Corporate Authentication System is expecting.
+
+The shopkeeper suddenly realizes that he just accidentally explained the password policy rules from his old job at the sled rental place down the street! The Official Toboggan Corporate Policy actually works a little differently.
+
+Each policy actually describes two positions in the password, where 1 means the first character, 2 means the second character, and so on. (Be careful; Toboggan Corporate Policies have no concept of "index zero"!) Exactly one of these positions must contain the given letter. Other occurrences of the letter are irrelevant for the purposes of policy enforcement.
+
+Given the same example list from above:
+
+1-3 a: abcde is valid: position 1 contains a and position 3 does not.
+1-3 b: cdefg is invalid: neither position 1 nor position 3 contains b.
+2-9 c: ccccccccc is invalid: both position 2 and position 9 contain c.
+How many passwords are valid according to the new interpretation of the policies?
 """
 
 
@@ -45,10 +59,24 @@ def find_num_good_passwords(data):
     return num_good_passwords
 
 
+def find_num_good_passwords_part_2(data):
+    num_good_passwords = 0
+    for d in data:
+        in_first_pos = d[3][d[0]-1] == d[2]
+        in_second_pos = d[3][d[1]-1] == d[2]
+
+        if in_first_pos ^ in_second_pos:
+            num_good_passwords += 1
+
+    return num_good_passwords
+
+
 if __name__ == '__main__':
     input = load_input('day_2.txt')
 
     num_good_passwords = find_num_good_passwords(input)
+    num_good_passwords_part_2 = find_num_good_passwords_part_2(input)
 
-    print(num_good_passwords)
+    print('Part 1:', num_good_passwords)
+    print('part 2:', num_good_passwords_part_2)
 
