@@ -33,8 +33,6 @@ def valid_rules(field, value):
         if len(value) == 4 and 2020 <= int(value) <= 2030:
             valid = True
     elif field == 'hgt':
-        print(value)
-        # get the numbers from the string
         p = re.compile(r"\d+")
         num = int(p.match(value).group())
         if value[-2:] == 'in':
@@ -43,38 +41,35 @@ def valid_rules(field, value):
         elif value[-2:] == 'cm':
             if 150 <= num <= 193:
                 valid = True
-        else:
-            print('wierd hgt field found')
     elif field == 'hcl':
-        p = re.compile(r"\#[a-z0-9]{6}")
-        if p:
+        p = re.compile(r"#[a-f0-9]{6}")
+        if p.match(value) and len(value) == 7:
             valid = True
     elif field == 'ecl':
         if value in ('amb', 'blu', 'brn', 'gry', 'grn', 'hzl', 'oth'):
             valid = True
     elif field == 'pid':
-        pass ###### a nine-digit number, including leading zeroes
+        p = re.compile(r"[0-9]{9}")
+        if p.match(value) and len(value) == 9:
+            valid = True
     # elif field == 'cid':
     #     pass
-
     return valid
 
 
 if __name__ == '__main__':
-    filename = 'day_4_example_1.txt'
-    # filename = 'day_4.txt'
+    # filename = 'day_4_example_2.txt'
+    filename = 'day_4.txt'
     buffer_size = 1000
 
     valid_entries = ['byr', 'iyr', 'eyr', 'hgt', 'hcl', 'ecl', 'pid'] #, 'cid']
 
     input = load_input(filename, parse_line)
     passports = parse_input(input, buffer_size)
-    # print(passports)
 
     num_valid = 0
     for p in passports:
         v = valid_entries[:]
-        # print(p)
         for entry in p:
             field, value = entry.split(':')
             if field in v:
@@ -85,3 +80,13 @@ if __name__ == '__main__':
             num_valid += 1
 
     print('Num valid', num_valid)
+
+    # Some testing:
+    # field = 'pid'
+    # values = ['000000001', '0123456789']
+    # values = ['brn', 'wat']
+    # values = ['#123abc', '#123abz', '123abc']
+    # values = ['2002', '2003']
+    # values = ['60in', '190cm', '190in', '190']
+    # for v in values:
+    #     print(valid_rules(field, v))
