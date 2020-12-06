@@ -33,12 +33,12 @@ if __name__ == '__main__':
 
     data = load_input(filename, parse_line)
     id_max = 0
+    all_possible_ids = list(range(seat_id(9, 0), seat_id(120, 7)))
     for d in data:
         # get row
         row = get_row_or_col(d[:7], 0, 127)
         col = get_row_or_col(d[7:], 0, 7)
 
         id = seat_id(row, col)
-        if id > id_max:
-            id_max = id
-    print(id_max)
+        all_possible_ids.remove(id)
+    print(all_possible_ids)
