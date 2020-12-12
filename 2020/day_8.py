@@ -1,4 +1,5 @@
 from util import load_input
+from copy import deepcopy
 
 
 def parse_line(line):
@@ -21,20 +22,29 @@ def perform_instruction(instruction, address,  accum):
     return address, accum
 
 
-def play_program(program, address, accum):
+def play_program(program, address, accum, final_address):
     addresses_been = set()
-    while address not in addresses_been:
-        print(accum)
+    while address not in addresses_been and address != final_address:
         addresses_been.add(address)
         address, accum = perform_instruction(program[address], address, accum)
-    return address, accum
+
+    return address, accum, address == final_address
+
 
 if __name__ == '__main__':
     filename = 'day_8.txt'
     program = load_input(filename, parse_line)
+    final_address = len(program)
 
-    # print('The program:')
-    # for instruction in program:
-    #     print(instruction)
+    # Also test without change the first adress?
+    for i in range(final_address + 1):
+        p = deepcopy(program)
+        if p[i][0] == 'nop':
+            p[i][0] = 'jmp'
+        elif p[i][0] == 'jmp':
+            p[i][0] = 'nop'
 
-    play_program(program, 0, 0)
+        _, accum, done = play_program(p, 0, 0, final_address)
+        if done:
+            break
+    print('Part 2 answer:', accum)
