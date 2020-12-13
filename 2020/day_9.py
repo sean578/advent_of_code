@@ -16,6 +16,16 @@ def check_ok(value, buffer):
     return False
 
 
+def find_range(data, invalid_number):
+    for i in range(len(data)):
+        for j in range(i, len(data)):
+            # print(data[i:j], sum(data[i:j]))
+            if sum(data[i:j]) == invalid_number:
+                return data[i:j]
+
+    return []
+
+
 if __name__ == '__main__':
     filename = 'day_9.txt'
     preamble = 25
@@ -26,8 +36,17 @@ if __name__ == '__main__':
     for i in range(preamble, len(data)):
         d = data[i]
         if not check_ok(d, buffer):
-            print(d)
+            invalid_number = d
+            break
 
         if i < len(data) - 1:
             buffer.pop(0)  # remove oldest from buffer
             buffer.append(data[i])  # add new to buffer (if not the last value)
+
+    print(data)
+    print(invalid_number)
+
+    range = find_range(data, invalid_number)
+
+    print(range)
+    print(max(range) + min(range))
