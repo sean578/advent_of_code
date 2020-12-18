@@ -13,7 +13,7 @@ def load_input(filename):
     return array
 
 
-def do_a_step(data, row, cols):
+def do_a_step(data, row, cols, adjacent):
     # take a deep copy here, create a new array
     next_pattern = deepcopy(data)
     for r in range(rows):
@@ -22,12 +22,21 @@ def do_a_step(data, row, cols):
             if data[r][c] != 0:
                 num_occupied = 0
                 for inc in adjacent:
-                    row = r + inc[0]
-                    col = c + inc[1]
-                    # if not outside the edge of the board
-                    if 0 <= row < rows and 0 <= col < cols:
-                        if data[row][col] == 2:
-                            num_occupied += 1
+                    i = 1
+                    done = False
+                    while not done:
+                        row = r + i*inc[0]
+                        col = c + i*inc[1]
+                        # if not outside the edge of the board
+                        if 0 <= row < rows and 0 <= col < cols:
+                            if data[row][col] == 2:
+                                num_occupied += 1
+                                done = True
+                            elif data[row][col] == 1:
+                                done = True
+                        else:
+                            done = True
+                        i += 1
 
                 # if seat empty
                 if data[r][c] == 1:
@@ -37,7 +46,7 @@ def do_a_step(data, row, cols):
                         next_pattern[r][c] = 1
                 # if seat occupied
                 elif data[r][c] == 2:
-                    if num_occupied >= 4:
+                    if num_occupied >= 5:
                         next_pattern[r][c] = 1
                     else:
                         next_pattern[r][c] = 2
@@ -58,7 +67,7 @@ if __name__ == '__main__':
 
     same = False
     while not same:
-        data, same = do_a_step(data, rows, cols)
+        data, same = do_a_step(data, rows, cols, adjacent)
 
     total_occupied = 0
     for row in range(rows):
@@ -66,4 +75,4 @@ if __name__ == '__main__':
             if data[row][col] == 2:
                 total_occupied += 1
 
-    print('Part 1 answer', total_occupied)
+    print('Part 2 answer', total_occupied)
