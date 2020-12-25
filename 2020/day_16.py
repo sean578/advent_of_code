@@ -1,3 +1,7 @@
+import copy
+from collections import defaultdict
+
+
 def load_input(filename, range_lines):
     range_minimums, range_maximums, fields = [], [], []
     other_tickets = []
@@ -21,49 +25,55 @@ def load_input(filename, range_lines):
     return fields, range_minimums, range_maximums, your_ticket, other_tickets
 
 
-def get_possible_fields(fields, num_fields, num_tickets, range_minimums, range_maximums, tickets):
-    # for each field create a set of possible fields
+def get_possible_fields(field_rules, tickets):
+    # If at least 1 rule is obeyed for all tickets then add possible location of field
+    # tickets: [ticket][field]
 
-    a = {}
-    for f in range(num_fields):
-        possible_field_indicies_all = []
-        for t in range(num_tickets):
-            # check which ranges it could fit in (use indicies) & append to possible field indices
-            possible_field_indicies = []
-            for i, (lower, upper) in enumerate(zip(range_minimums, range_maximums)):
-                if lower <= tickets[t][f] <= upper:
-                    possible_field_indicies.append(i // 2)
-            possible_field_indicies_all.append(possible_field_indicies)
+    possible_fields = defaultdict(set)  # key = field name, value = set of possible locations
 
-        # Now find the intersection of the possible field indices
-        possible = set(possible_field_indicies_all[0]).intersection(*possible_field_indicies_all)
-        a[fields[f]] = possible
+    # loop over fields & corresponding rules
+    for field, rules in field_rules.items():
+        # loop over position - which positions work for the field
+        for pos in range(len(tickets[0])):
+            # loop over tickets - do all tickets meet rule
+            num_ok = 0
+            for t in tickets:
+                # check if ok for either range
+                if (rules[0][0] <= t[pos] <= rules[0][1]) or (rules[1][0] <= t[pos] <= rules[1][1]):
+                    num_ok += 1
+            if num_ok == len(tickets):
+                possible_fields[field].add(pos)
 
-    return a
+    return possible_fields
 
 
-def get_fields(a):
+def get_fields(possible_fields):
+    # keys: field names
+    # values: possible indicies for the field names
+    possible_fields = copy.deepcopy(possible_fields)
+
     # if len set = 1 then we know the field -> remove from other sets
     all_done = False
     while not all_done:
         all_done = True
-        done = []
-        for field, value in a.items():
+        done = set()
+        for field, value in possible_fields.items():
             if len(value) == 1:
-                done.append(list(value)[0])
+                done.add(list(value)[0])
+        # discard found indices from the lists of possible indices for other fields
         for d in done:
-            for field, value in a.items():
+            for field, value in possible_fields.items():
                 if len(value) > 1:
-                    a[field].discard(d)  # discard if d in set
+                    possible_fields[field].discard(d)  # discard if d in set
                     all_done = False
-    return a
+    return possible_fields
 
 
-def remove_bad_tickets(num_tickets, num_fields, tickets):
+def remove_bad_tickets(tickets):
     good_tickets = []
-    for t in range(num_tickets):
+    for t in range(len(tickets)):
         fields_ok = []
-        for f in range(num_fields):
+        for f in range(len(tickets[1])):
             field_ok = False
             for minimum, maximum in zip(range_minimums, range_maximums):
                 if minimum <= tickets[t][f] <= maximum:
@@ -75,43 +85,56 @@ def remove_bad_tickets(num_tickets, num_fields, tickets):
     return good_tickets
 
 
+def convert_ticket_to_dict(ticket, a):
+    yours = {}
+    for field, index in a.items():
+        yours[field] = ticket[list(index)[0]]
+    return yours
+
+
+def get_answer(yours, string):
+    answer = 1
+    for field, value in yours.items():
+        if field[:len(string)] == string:
+            answer *= value
+    if answer == 1:
+        return 0
+    else:
+        return answer
+
+
+def print_dict(title, dict):
+    print()
+    print(title)
+    for key, value in dict.items():
+        print(key, value)
+
+
 if __name__ == '__main__':
     filename = 'day_16.txt'
     ranges_lines = 20
 
+    # Read in fields, allowable ranges and tickets
     fields, range_minimums, range_maximums, your_ticket, other_tickets = load_input(filename, ranges_lines)
-    print('fields', fields)
-
-    print('range_minimums', range_minimums)
-    print('range_maximums', range_maximums)
-
-    num_tickets = len(other_tickets)
-    num_fields = len(other_tickets[0])
     # other ticket indicies: [ticket][field]
 
     # Remove bad tickets
-    good_tickets = remove_bad_tickets(num_tickets, num_fields, other_tickets)
+    good_tickets = remove_bad_tickets(other_tickets)
 
-    print('num tickets', len(other_tickets))
-    print('num good tickets', len(good_tickets))
+    # rearrange range mins/max by field
+    field_rules = defaultdict(list)
+    for index, (i, j) in enumerate(zip(range_minimums, range_maximums)):
+        field_rules[fields[index // 2]].append((i, j))
 
-    a = get_possible_fields(fields, num_fields, len(good_tickets), range_minimums, range_maximums, good_tickets)
-    print('Possibilities after first pass', a)
+    # First pass of possible locations of fields
+    possible_fields = get_possible_fields(field_rules, good_tickets)
 
-    a = get_fields(a)
-    print('Actual', a)
+    # Algorithm to find actual positions
+    actual_fields = get_fields(possible_fields)
 
     # convert your ticket
-    print('Your ticket', your_ticket)
-    yours = {}
-    for field, index in a.items():
-        yours[field] = your_ticket[list(index)[0]]
-    print('Your ticket', yours)
+    yours = convert_ticket_to_dict(your_ticket, actual_fields)
 
     # Get the answer
-    answer = 1
-    for field, value in yours.items():
-        if field[:9] == 'departure':
-            answer *= value
-
-    print('Answer part 2:', answer)
+    answer = get_answer(yours, 'departure')
+    print('\nAnswer part 2:', answer)
