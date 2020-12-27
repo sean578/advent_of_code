@@ -1,3 +1,5 @@
+# TODO: Try using https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.generic_filter.html
+
 import numpy as np
 import itertools
 import copy
