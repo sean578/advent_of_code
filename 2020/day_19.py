@@ -13,6 +13,9 @@ def load_input(filename):
         else:
             if len(line.strip()) > 0:
                 test_strings.append(line.strip('\n'))
+    # New rules for part 2
+    rules['8'] = '42 | 42 8'
+    rules['11'] = '42 31 | 42 11 31'
     return rules, test_strings
 
 
@@ -27,12 +30,16 @@ if __name__ == '__main__':
 
     instruction = dict['0']
     p = re.compile(r'\d+')
+    i = 0
     while p.search(instruction):
+        if i == 101:
+            break
         instruction = p.sub(partial(replace_with_dict_entry, dict=dict), instruction)
+        i += 1
 
     # get rid of spaces & only match if reach end of string
     instruction = instruction.replace(' ', '') + '$'
-    print('Expanded regular expression:\n', instruction)
+    # print('Expanded regular expression:\n', instruction)
 
     matches = []
     p = re.compile(instruction)
@@ -42,4 +49,5 @@ if __name__ == '__main__':
         else:
             matches.append(0)
 
-    print('Answer part 1:', sum(matches))
+    print('Answer part 2:', sum(matches))
+
