@@ -1,5 +1,5 @@
 import numpy as np
-from collections import defaultdict
+import copy
 
 
 def load_input(filename):
@@ -19,55 +19,84 @@ def load_input(filename):
     return tiles
 
 
-def get_outer(array):
-    outer = [
-        array[:, 0],
-        array[:, -1],
-        array[0, :],
-        array[-1, :]
-    ]
-    return outer
+def flip(array, f):
+    flipped_array = None
+    if f == 0:
+        flipped_array = array
+    elif f == 1:
+        flipped_array = np.flip(array, 0)
+    elif f == 2:
+        flipped_array = np.flip(array, 1)
+    elif f == 3:
+        flipped_array = np.flip(array, (0, 1))
+    else:
+        print('Incorrect number of flips')
+    return flipped_array
+
+
+def rotate(array, r):
+    return np.rot90(array, r, axes=(0, 1))
+
+
+def find_connecting_tile_right(tile, tiles, right_edge):
+    # find any that fit on the right of the tile until none do
+    for id, t in tiles.items():
+        for f in range(4):
+            t_flipped = flip(t, f)
+            for r in range(4):
+                t_rotated = rotate(t_flipped, r)
+                t_left = t_rotated[:, 0][::-1]
+                if np.array_equal(right_edge, t_left):
+                    tile = np.hstack((tile, t_rotated))
+                    right_edge = tile[:, -1]
+                    del tiles[id]
+                    return tile, tiles, right_edge, True
+    return tile, tiles, right_edge, False
+
+
+def find_connecting_tile_left(tile, tiles, left_edge):
+    # find any that fit on the left of the tile until none do
+    for id, t in tiles.items():
+        for f in range(4):
+            t_flipped = flip(t, f)
+            for r in range(4):
+                t_rotated = rotate(t_flipped, r)
+                t_right = t_rotated[:, -1]
+                if np.array_equal(left_edge, t_right):
+                    tile = np.hstack((t_rotated, tile))
+                    left_edge = tile[:, 0]
+                    del tiles[id]
+                    return tile, tiles, right_edge, True
+    return tile, tiles, right_edge, False
 
 
 if __name__ == '__main__':
-    filename = 'day_20.txt'
+    filename = 'day_20_example_1.txt'
     tiles = load_input(filename)
+    tiles_original = copy.deepcopy(tiles)
 
-    # Get possible outers
-    outers = defaultdict(list)
-    all_outers = []
-    for num, tile in tiles.items():
-        outer = get_outer(tile)
-        for i in outer:
-            outers[num].append(i)
-            all_outers.append(i)
+    lines = []
 
-    # Get number matches per tile
-    matches = {}
+    # while tiles left -> choose any tile
+    while len(list(tiles.keys())) > 0:
+        id = list(tiles.keys())[0]
+        tile = tiles[id]
+        del tiles[id]
 
-    for id, edges in outers.items():
-        m = 0
-        for e in edges:
-            for a in all_outers:
-                if list(e) == list(a):
-                    m += 1
-                if list(e[::-1]) == list(a):
-                    m += 1
-        matches[id] = m - 4
+        left_edge = tile[:, 0]
+        right_edge = tile[:, -1][::-1]
 
-    for key, value in matches.items():
-        print(key, value)
+        found = True
+        while found:
+            tile, tiles, right_edge, found = find_connecting_tile_right(tile, tiles, right_edge)
+        found = True
+        while found:
+            tile, tiles, left_edge, found = find_connecting_tile_left(tile, tiles, left_edge)
 
-    minimum = min(matches.values())
+        # todo: if tile is not of the correct size then need to repeat with the initial tile rotated
+        lines.append(tile)
 
-    corner_tiles = []
-    for key, value in matches.items():
-        if value == minimum:
-            corner_tiles.append(key)
+    for line in lines:
+        print(line)
 
-    print(corner_tiles)
-
-    answer = 1
-    for a in [int(i) for i in corner_tiles]:
-        answer *= a
-    print('Answer part 1:', answer)
+    print(tiles.keys())
