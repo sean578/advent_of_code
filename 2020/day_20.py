@@ -1,5 +1,5 @@
 import numpy as np
-np.set_printoptions(edgeitems=30, linewidth=100000,
+np.set_printoptions(edgeitems=100, linewidth=100000,
     formatter=dict(float=lambda x: "%.3g" % x))
 from collections import defaultdict
 import math
@@ -78,9 +78,8 @@ def sides(tiles):
     return connected_sides_nums, connected_sides
 
 
-def find_match_right(current_side, tiles, tiles_left):
-    id, r, f = None, None, None
-    for id in tiles_left:
+def find_match_right(current_side, tiles, tile_ids_remaining):
+    for id in tile_ids_remaining:
         for r in range(4):
             for f in range(2):
                 tile_adj = rotate(tiles[id], r)
@@ -91,62 +90,78 @@ def find_match_right(current_side, tiles, tiles_left):
     return None, None, None, None
 
 
-def find_match_below(current_side, tiles, tiles_left):
-    id, r, f = None, None, None
-    for id in tiles_left:
+def find_match_below(current_side, tiles, tile_ids_remaining):
+    for id in tile_ids_remaining:
         for r in range(4):
             for f in range(2):
                 tile_adj = rotate(tiles[id], r)
                 tile_adj = flip(tile_adj, f)
                 sides = get_sides(tile_adj)
                 if np.array_equal(current_side, sides['top']):
-                    return id, r, f, sides['right']
-    return None, None, None, None
+                    return id, r, f, sides['right'], sides['bottom']
+    return None, None, None, None, None
 
 
-def find_tiles(size, current_side, below_side, tiles, tiles_left):
+def find_tiles(size, tiles, tile_ids_remaining, top_left):
+
+    pic = {
+        'grid': np.zeros((num_tiles, num_tiles), dtype=object),
+        'rots': np.zeros((num_tiles, num_tiles), dtype=int),
+        'flips': np.zeros((num_tiles, num_tiles), dtype=int)
+    }
+
+    pic['grid'][0, 0] = top_left
+
+    sides = get_sides(tiles[top_left])
+    current_side = sides['right']
+    bottom_side = sides['bottom']
+
     for pos_y in range(size):
         for pos_x in range(1, size):
-            id, r, f, side = find_match_right(current_side, tiles, tiles_left)
-            grid[pos_y, pos_x] = id
-            rots[pos_y, pos_x] = r
-            flips[pos_y, pos_x] = f
-            tiles_left.remove(id)
-            current_side = side
+            id, r, f, current_side = find_match_right(current_side, tiles, tile_ids_remaining)
+            pic['grid'][pos_y, pos_x] = id
+            pic['rots'][pos_y, pos_x] = r
+            pic['flips'][pos_y, pos_x] = f
+            tile_ids_remaining.remove(id)
 
         # Get 1st one in line
         if pos_y < size - 1:
-            id, r, f, _ = find_match_below(below_side, tiles, tiles_left)
-            grid[pos_y + 1, 0] = id
-            rots[pos_y + 1, 0] = r
-            flips[pos_y + 1, 0] = f
-            sides = get_sides(tiles[id])
-            current_side = sides['right']
-            below_side = sides['bottom']
-            tiles_left.remove(id)
-    return grid, rots, flips
+            id, r, f, current_side, bottom_side = find_match_below(bottom_side, tiles, tile_ids_remaining)
+            pic['grid'][pos_y + 1, 0] = id
+            pic['rots'][pos_y + 1, 0] = r
+            pic['flips'][pos_y + 1, 0] = f
+            tile_ids_remaining.remove(id)
+
+    return pic
 
 
-def create_picture(size, tile_size, tiles, grid, flips, rots):
+def create_picture(num_tiles, tile_size, tiles, pic):
     # Now create the picture
-    picture = np.zeros((size*tile_size, size*tile_size))
-    for x in range(size):
-        for y in range(size):
-            tile = tiles[grid[y, x]]
-            tile_flipped = flip(tile, flips[y, x])
-            tile_final = rotate(tile_flipped, rots[y, x])
-            picture[y*tile_size:(y+1)*tile_size, x*tile_size:(x+1)*tile_size] = tile_final
+    picture = np.zeros((num_tiles * tile_size, num_tiles * tile_size))
+    for x in range(num_tiles):
+        for y in range(num_tiles):
+
+            tile = tiles[pic['grid'][y, x]]
+            tile_flipped = flip(tile, pic['flips'][y, x])
+            tile_final = rotate(tile_flipped, pic['rots'][y, x])
+            picture[x*tile_size : (x+1)*tile_size, y*tile_size : (y+1)*tile_size] = tile_final
+
+            if pic['grid'][y, x] == '1907':
+                print('flips', pic['flips'][y, x])
+                print('rots', pic['rots'][y, x])
+                print('x, y', x, y)
+                print(picture)
     return picture
 
 
-def create_picture_without_gaps(size, tile_size, tiles, grid, flips, rots):
+def create_picture_without_gaps(size, tile_size, tiles, pic):
     # Now create the picture
     picture = np.zeros((size*(tile_size-2), size*(tile_size-2)))
     for x in range(size):
         for y in range(size):
-            tile = tiles[grid[y, x]]
-            tile_flipped = flip(tile, flips[y, x])
-            tile_final = rotate(tile_flipped, rots[y, x])
+            tile = tiles[pic['grid'][y, x]]
+            tile_flipped = flip(tile, pic['flips'][y, x])
+            tile_final = rotate(tile_flipped, pic['rots'][y, x])
             picture[y*(tile_size-2):(y+1)*(tile_size-2), x*(tile_size-2):(x+1)*(tile_size-2)] = tile_final[1:tile_size-1, 1:tile_size-1]
     return picture
 
@@ -154,7 +169,6 @@ def create_picture_without_gaps(size, tile_size, tiles, grid, flips, rots):
 def load_monster(filename):
     monster = []
     for line in open(filename).readlines():
-        # l = line.strip('\n')
         for i in line.strip('\n'):
             if i == '#':
                 monster.append(1)
@@ -165,58 +179,66 @@ def load_monster(filename):
     return monster
 
 
-def find_monster(buffer):
-    # print('buffer', buffer)
-    if np.all(buffer):
-        return 1
-    else:
-        return 0
+def find_a_top_left_tile(connected_sides, connected_sides_nums):
+    for id, num in connected_sides_nums.items():
+        if num == 2:
+            if 'right' in connected_sides[id]:
+                if 'bottom' in connected_sides[id]:
+                    return id
 
 
 if __name__ == '__main__':
-    filename = 'day_20_example_1.txt'
+    filename = 'day_20.txt'
+    # filename = 'day_20_example_1.txt'
     tiles = load_input(filename)
-    size = int(math.sqrt(len(tiles.items())))  # Assume grid square
+    num_tiles = int(math.sqrt(len(tiles.items())))  # Assume grid square
     tile_size = len(list(tiles.values())[0])
-    print('size', size)
+    print('size', num_tiles)
     print('tile_size', tile_size)
 
     connected_sides_nums, connected_sides = sides(tiles)
 
-    top_left = '2971'  # todo: find this automatically from above dicts
-    tiles_left = list(tiles.keys())
-    tiles_left.remove(top_left)
+    print(tiles['2833'])
+    # print(tiles['1907'])
 
-    grid = np.zeros((size, size), dtype=object)
-    rots = np.zeros((size, size), dtype=int)
-    flips = np.zeros((size, size), dtype=int)
-    grid[0, 0] = top_left
-    sides = get_sides(tiles[top_left])
-    current_side = sides['right']
-    below_side = sides['bottom']
+    print(flip(rotate(tiles['1907'], 3), 1))
 
-    grid, rots, flips = find_tiles(size, current_side, below_side, tiles, tiles_left)
-    picture = create_picture(size, tile_size, tiles, grid, flips, rots)
-    picture_without_gaps = create_picture_without_gaps(size, tile_size, tiles, grid, flips, rots)
+    # for id, sides in connected_sides.items():
+    #     print(id, sides)
 
-    # Do any rotations/flips of the final picture
-    picture = flip(picture, 1)
-    picture_without_gaps = flip(picture_without_gaps, 1)
-    print(picture_without_gaps)
+    top_left = find_a_top_left_tile(connected_sides, connected_sides_nums)
+    print('top_left', top_left)
+
+    tiles_ids_remaining = list(tiles.keys())
+    tiles_ids_remaining.remove(top_left)
+
+    pic = find_tiles(num_tiles, tiles, tiles_ids_remaining, top_left)
+
+    print('grid')
+    print(pic['grid'])
+    print('rots')
+    print(pic['rots'])
+    print('flips')
+    print(pic['flips'])
+
+    picture = create_picture(num_tiles, tile_size, tiles, pic)
+    print(picture)
+    picture_without_gaps = create_picture_without_gaps(num_tiles, tile_size, tiles, pic)
 
     # Find sea monsters
     monster = load_monster('day_20_monster.txt')
-    print(np.array(monster, dtype=int))
 
     monsters_found = []
     for f in range(2):
         for r in range(4):
             pic = flip(picture_without_gaps, f)
             pic = rotate(pic, r)
-            found = generic_filter(pic, find_monster, footprint=monster, mode='constant')
+            found = generic_filter(pic, lambda x: np.all(x), footprint=monster, mode='constant')
             monsters_found.append(np.count_nonzero(found))
 
     num_monsters = max(monsters_found)
     print('num monsters', num_monsters)
     answer = np.count_nonzero(picture_without_gaps) - 15*num_monsters
     print('Answer part 2:', answer)
+
+    # 2369 too high
