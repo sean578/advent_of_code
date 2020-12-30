@@ -138,19 +138,13 @@ def find_tiles(size, tiles, tile_ids_remaining, top_left):
 def create_picture(num_tiles, tile_size, tiles, pic):
     # Now create the picture
     picture = np.zeros((num_tiles * tile_size, num_tiles * tile_size))
-    for x in range(num_tiles):
-        for y in range(num_tiles):
-
+    for y in range(num_tiles):
+        for x in range(num_tiles):
             tile = tiles[pic['grid'][y, x]]
-            tile_flipped = flip(tile, pic['flips'][y, x])
-            tile_final = rotate(tile_flipped, pic['rots'][y, x])
-            picture[x*tile_size : (x+1)*tile_size, y*tile_size : (y+1)*tile_size] = tile_final
-
-            if pic['grid'][y, x] == '1907':
-                print('flips', pic['flips'][y, x])
-                print('rots', pic['rots'][y, x])
-                print('x, y', x, y)
-                print(picture)
+            # Have to rotate before flipping!!
+            tile = rotate(tile, pic['rots'][y, x])
+            tile = flip(tile, pic['flips'][y, x])
+            picture[y*tile_size : (y+1)*tile_size, x*tile_size : (x+1)*tile_size] = tile
     return picture
 
 
@@ -160,9 +154,10 @@ def create_picture_without_gaps(size, tile_size, tiles, pic):
     for x in range(size):
         for y in range(size):
             tile = tiles[pic['grid'][y, x]]
-            tile_flipped = flip(tile, pic['flips'][y, x])
-            tile_final = rotate(tile_flipped, pic['rots'][y, x])
-            picture[y*(tile_size-2):(y+1)*(tile_size-2), x*(tile_size-2):(x+1)*(tile_size-2)] = tile_final[1:tile_size-1, 1:tile_size-1]
+            # Have to rotate before flipping!!
+            tile = rotate(tile, pic['rots'][y, x])
+            tile = flip(tile, pic['flips'][y, x])
+            picture[y*(tile_size-2):(y+1)*(tile_size-2), x*(tile_size-2):(x+1)*(tile_size-2)] = tile[1:tile_size-1, 1:tile_size-1]
     return picture
 
 
@@ -189,26 +184,13 @@ def find_a_top_left_tile(connected_sides, connected_sides_nums):
 
 if __name__ == '__main__':
     filename = 'day_20.txt'
-    # filename = 'day_20_example_1.txt'
     tiles = load_input(filename)
     num_tiles = int(math.sqrt(len(tiles.items())))  # Assume grid square
     tile_size = len(list(tiles.values())[0])
-    print('size', num_tiles)
-    print('tile_size', tile_size)
 
     connected_sides_nums, connected_sides = sides(tiles)
 
-    print(tiles['2833'])
-    # print(tiles['1907'])
-
-    print(flip(rotate(tiles['1907'], 3), 1))
-
-    # for id, sides in connected_sides.items():
-    #     print(id, sides)
-
     top_left = find_a_top_left_tile(connected_sides, connected_sides_nums)
-    print('top_left', top_left)
-
     tiles_ids_remaining = list(tiles.keys())
     tiles_ids_remaining.remove(top_left)
 
@@ -222,7 +204,6 @@ if __name__ == '__main__':
     print(pic['flips'])
 
     picture = create_picture(num_tiles, tile_size, tiles, pic)
-    print(picture)
     picture_without_gaps = create_picture_without_gaps(num_tiles, tile_size, tiles, pic)
 
     # Find sea monsters
@@ -240,5 +221,3 @@ if __name__ == '__main__':
     print('num monsters', num_monsters)
     answer = np.count_nonzero(picture_without_gaps) - 15*num_monsters
     print('Answer part 2:', answer)
-
-    # 2369 too high
