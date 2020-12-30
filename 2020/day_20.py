@@ -66,8 +66,8 @@ def find_connecting_tile_left(tile, tiles, left_edge):
                     tile = np.hstack((t_rotated, tile))
                     left_edge = tile[:, 0]
                     del tiles[id]
-                    return tile, tiles, right_edge, True
-    return tile, tiles, right_edge, False
+                    return tile, tiles, left_edge, True
+    return tile, tiles, left_edge, False
 
 
 if __name__ == '__main__':
@@ -76,27 +76,53 @@ if __name__ == '__main__':
     tiles_original = copy.deepcopy(tiles)
 
     lines = []
-
-    # while tiles left -> choose any tile
     while len(list(tiles.keys())) > 0:
-        id = list(tiles.keys())[0]
+        id = list(tiles.keys())[-1]
+        print('id', id)
         tile = tiles[id]
+        # tiles_roleback = copy.deepcopy(tiles)
         del tiles[id]
-
         left_edge = tile[:, 0]
         right_edge = tile[:, -1][::-1]
 
         found = True
         while found:
             tile, tiles, right_edge, found = find_connecting_tile_right(tile, tiles, right_edge)
+            if found:
+                print('found right')
         found = True
         while found:
             tile, tiles, left_edge, found = find_connecting_tile_left(tile, tiles, left_edge)
+            if found:
+                print('found left')
 
-        # todo: if tile is not of the correct size then need to repeat with the initial tile rotated
+        # print(tile.shape)
+        # if tile.shape[1] != 30:
+        #     print('wrong tile', tile)
+        #     tiles = tiles_roleback
+        #     tiles[id] = rotate(tiles[id], 1)
+        # else:
         lines.append(tile)
 
     for line in lines:
         print(line)
 
-    print(tiles.keys())
+    # Now need to flip/rotate the lines to match them up
+    lines[0] = flip(lines[0], 3)
+    lines[2] = flip(lines[2], 3)
+
+    a = lines[0]
+    b = lines[2]
+    c = lines[1]
+    # Convert into one big array
+    answer = np.vstack((a, b, c))
+    # print(answer)
+    #
+    # # Do final flip/rotation
+    answer = flip(answer, 2)
+    # answer = rotate(answer, 2)
+    # print(answer)
+    # # print(answer)
+    # # print
+    # # print(lines[0])
+
