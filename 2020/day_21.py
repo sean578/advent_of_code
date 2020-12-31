@@ -1,4 +1,5 @@
 from collections import defaultdict
+import copy
 
 
 def load_input(filename):
@@ -56,6 +57,20 @@ def get_no_allergen_ingredients(all_ingredients, intersections_by_ingredient):
     return set(all_ingredients).difference(set(intersections_by_ingredient.keys()))
 
 
+def get_allergens(intersections_by_ingredient):
+    allergens = {}
+    while len(intersections_by_ingredient.keys()) > 0:
+        intersections_by_ingredient_temp = copy.deepcopy(intersections_by_ingredient)
+        for i, a in intersections_by_ingredient_temp.items():
+            if len(a) == 1:
+                allergens[i] = a[0]
+                del intersections_by_ingredient[i]
+                for i1, a1 in intersections_by_ingredient.items():
+                    if a[0] in a1:
+                        intersections_by_ingredient[i1].remove(a[0])
+                break
+    return allergens
+
 if __name__ == '__main__':
     filename = 'day_21.txt'
     ingredients, allergies = load_input(filename)
@@ -63,11 +78,6 @@ if __name__ == '__main__':
     all_individual_ingredients, all_ingredients = get_ingredients_list(ingredients)
     intersections = get_allergy_intersections(ingredients, allergies, all_allergies)
     intersections_by_ingredient = get_intersections_by_ingredient(intersections, all_ingredients)
-
-    print('\nIntersections by ingredient')
-    for i, a in intersections_by_ingredient.items():
-        print(i, a)
-
     no_allergen_ingredients = get_no_allergen_ingredients(all_ingredients, intersections_by_ingredient)
 
     answer = 0
@@ -75,3 +85,18 @@ if __name__ == '__main__':
         answer += all_individual_ingredients.count(i)
 
     print('\nAnswer part 1:', answer)
+
+    # part 2
+    allergens = get_allergens(intersections_by_ingredient)
+
+    # List alphabetically by allergen
+    allergens_by_allergy = {}
+    for i, a in allergens.items():
+        allergens_by_allergy[a] = i
+
+    answer_part2 = []
+    for entry in sorted(allergens_by_allergy.items(), key = lambda x: x[0], reverse=False):
+        answer_part2.append(entry[1])
+
+    print('\nAnswer part 2:')
+    print(','.join(answer_part2))
