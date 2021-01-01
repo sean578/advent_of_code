@@ -1,5 +1,6 @@
 from collections import deque
 import copy
+import sys
 
 
 def load_input(filename):
@@ -60,18 +61,14 @@ def play_hand(deck1, deck2, winner):
     return deck1, deck2
 
 
-def answer(w1, w2):
-    mults1 = list(range(len(list(w1)), 0, -1))
-    mults2 = list(range(len(list(w2)), 0, -1))
+def answer(w):
+    mults = list(range(len(list(w)), 0, -1))
 
-    answer_a = 0
-    for a, b in zip(w1, mults1):
-        answer_a += a*b
-    answer_b = 0
-    for a, b in zip(w2, mults2):
-        answer_a += a*b
+    answer = 0
+    for a, b in zip(w, mults):
+        answer += a*b
 
-    return max(answer_a, answer_b)
+    return answer
 
 
 def play_recursive_ok(deck1, deck2):
@@ -84,50 +81,64 @@ def play_recursive_ok(deck1, deck2):
 
 def in_infinite_loop(deck1, deck2, states):
     """ Check if stuck in an infinite loop """
-    pass
+    for s in states:
+        if tuple(deck1) == s[0] and tuple(deck2) == s[1]:
+            return True
+    return False
 
 
-def play_recursive_game(deck1, deck2):
+def copy_cards_for_subgame(deck1, deck2):
+    d1 = copy.deepcopy(deck1)
+    d2 = copy.deepcopy(deck2)
+    num_cards_d1 = d1.popleft()
+    num_cards_d2 = d2.popleft()
+    d1 = deque(list(d1)[:num_cards_d1])
+    d2 = deque(list(d2)[:num_cards_d2])
+    return d1, d2
+
+
+def play_recursive_game(deck1, deck2, states, num_games):
+
+    num_games += 1
+    # print(num_games)
 
     # if a deck is empty - finish
     if len(list(deck1)) == 0:
         winner = '2'
-        return deck1, deck2, winner
+        return deck1, deck2, winner, num_games
     elif len(list(deck2)) == 0:
         winner = '1'
-        return deck1, deck2, winner
-    # else if already been in this state - finish
-    # todo
-    # Check if enough cards left to play recursive game
-    elif play_recursive_ok(deck1, deck2):
-        d1 = copy.deepcopy(deck1)
-        d2 = copy.deepcopy(deck2)
-        num_cards_d1 = d1.popleft()
-        num_cards_d2 = d2.popleft()
-        d1 = deque(list(d1)[:num_cards_d1])
-        d2 = deque(list(d2)[:num_cards_d2])
+        return deck1, deck2, winner, num_games
 
-        d1, d2, winner = play_recursive_game(d1, d2)
+    if in_infinite_loop(deck1, deck2, states):
+        winner = '1'
+        return deck1, deck2, winner, num_games
+    else:
+        states.add((tuple(deck1), tuple(deck2)))
+
+    # Check if enough cards left to play recursive game
+    if play_recursive_ok(deck1, deck2):
+        d1, d2 = copy_cards_for_subgame(deck1, deck2)
+        d1, d2, winner, num_games = play_recursive_game(d1, d2, set(), num_games)
         deck1, deck2 = play_hand(deck1, deck2, winner)
-        return play_recursive_game(deck1, deck2)
     else:
         deck1, deck2 = play_hand(deck1, deck2, False)
-        return play_recursive_game(deck1, deck2)
+
+    return play_recursive_game(deck1, deck2, states, num_games)
 
 
 if __name__ == '__main__':
-    filename = 'day_22_example_1.txt'
+    sys.setrecursionlimit(22000)
+
+    filename = 'day_22.txt'
+    states = set()
     deck1, deck2 = load_input(filename)
+    deck1, deck2, w, num_games = play_recursive_game(deck1, deck2, states, 0)
 
-    w1, w2 = play_game(deck1, deck2)
-    answer_part1 = answer(w1, w2)
-    print('Answer part 1', answer_part1)
-
-    # Part 2
-    deck1, deck2 = load_input(filename)
-    deck1, deck2, w = play_recursive_game(deck1, deck2)
-
-    answer_part2 = answer(deck1, deck2)
+    if w == '1':
+        answer_part2 = answer(deck1)
+    else:
+        answer_part2 = answer(deck2)
     print('Answer part 2', answer_part2)
-
+    print('It took', num_games, 'calls')
 
