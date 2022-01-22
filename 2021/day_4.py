@@ -34,10 +34,13 @@ def check_if_board_has_won(boards):
     cols = np.argwhere(np.sum(boards, axis=1) == 0)
     rows = np.argwhere(np.sum(boards, axis=2) == 0)
 
-    if len(cols) == 1:
-        return cols[0][0]
-    if len(rows) == 1:
-        return rows[0][0]
+    if len(cols) > 0 or len(rows) > 0:
+        a = []
+        if len(cols) > 0:
+            a += [c[0] for c in cols]
+        if len(rows) > 0:
+            a += [r[0] for r in rows]
+        return a
 
     return None
 
@@ -45,6 +48,7 @@ def check_if_board_has_won(boards):
 def final_calc(boards, winning_board, number):
     board_sum = np.sum(boards[winning_board, ...])
     return board_sum * number
+
 
 def print_boards(num_boards, boards):
     for i in range(num_boards):
@@ -56,16 +60,38 @@ if __name__ == '__main__':
 
     numbers, boards, num_boards = read_numbers_and_boards('day_4.txt')
 
+    winning_boards = set()
+    done = False
+    last_num = -1
     for n in numbers:
+        if done:
+            break
+        print('number', n)
+
         boards = apply_number_to_boards(n, boards)
-        check_if_board_has_won(boards)
         winning_board = check_if_board_has_won(boards)
         if winning_board:
-            print('winning board number', winning_board)
-            break
+            for board in winning_board:
+                # print('winning_boards', winning_boards)
+                winning_boards.add(board)
+                if len(winning_boards) == num_boards:
+                    print('done', winning_boards)
+                    worst = board
+                    last_num = n
+                    done = True
+                    break
+                boards[board, ...] = -1
 
-    print('result', final_calc(boards, winning_board, n))
+    # last_board = set(range(num_boards)) - winning_boards
+    # last_board = last_board.pop()
+    print('last_board', worst)
+    print(boards[worst, ...])
 
+    print_boards(num_boards, boards)
 
+    answer = final_calc(boards, worst, last_num)
+    print('last board', worst)
+    print('last num', last_num)
+    print('answer', answer)
 
-
+    # print_boards(num_boards, boards)
