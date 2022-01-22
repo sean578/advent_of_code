@@ -34,15 +34,12 @@ def check_if_board_has_won(boards):
     cols = np.argwhere(np.sum(boards, axis=1) == 0)
     rows = np.argwhere(np.sum(boards, axis=2) == 0)
 
-    if len(cols) > 0 or len(rows) > 0:
-        a = []
-        if len(cols) > 0:
-            a += [c[0] for c in cols]
-        if len(rows) > 0:
-            a += [r[0] for r in rows]
-        return a
-
-    return None
+    a = []
+    if len(cols) > 0:
+        a += [c[0] for c in cols]
+    if len(rows) > 0:
+        a += [r[0] for r in rows]
+    return a
 
 
 def final_calc(boards, winning_board, number):
@@ -66,32 +63,20 @@ if __name__ == '__main__':
     for n in numbers:
         if done:
             break
-        print('number', n)
 
         boards = apply_number_to_boards(n, boards)
         winning_board = check_if_board_has_won(boards)
         if winning_board:
             for board in winning_board:
-                # print('winning_boards', winning_boards)
                 winning_boards.add(board)
                 if len(winning_boards) == num_boards:
-                    print('done', winning_boards)
                     worst = board
                     last_num = n
                     done = True
                     break
                 boards[board, ...] = -1
 
-    # last_board = set(range(num_boards)) - winning_boards
-    # last_board = last_board.pop()
-    print('last_board', worst)
-    print(boards[worst, ...])
-
-    print_boards(num_boards, boards)
-
     answer = final_calc(boards, worst, last_num)
     print('last board', worst)
     print('last num', last_num)
     print('answer', answer)
-
-    # print_boards(num_boards, boards)
