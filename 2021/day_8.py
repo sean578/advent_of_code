@@ -2,24 +2,10 @@ import copy
 
 
 def read_data(filename):
-    return [line.strip().split(' | ') for line in open(filename).readlines()]
+    return [line.strip() for line in open(filename).readlines()]
 
 
-def get_segment_mapping(examples):
-
-    # The actual mapping from digit to segments
-    digit_to_segments = {
-        0: {'A', 'B', 'C', 'E', 'F', 'G'},
-        1: {'C', 'F'},
-        2: {'A', 'C', 'D', 'E', 'G'},
-        3: {'A', 'C', 'D', 'F', 'G'},
-        4: {'B', 'C', 'D', 'F'},
-        5: {'A', 'B', 'D', 'F', 'G'},
-        6: {'A', 'B', 'D', 'E', 'F', 'G'},
-        7: {'A', 'C', 'F'},
-        8: {'A', 'B', 'C', 'D', 'E', 'F', 'G'},
-        9: {'A', 'B', 'C', 'D', 'F', 'G'},
-    }
+def get_segment_mapping(examples, digit_to_segments):
 
     # How many times does each segment appear in the examples
     counts = {key: 0 for key in ['a', 'b', 'c', 'd', 'e', 'f', 'g']}
@@ -94,13 +80,50 @@ def get_segment_mapping(examples):
     return correct_mapping
 
 
+def translate(example_output, correct_mapping):
+
+    translated_outputs = []
+    for digit in example_output:
+        translated_digit = set()
+        for segment in digit:
+            translated_digit.add(correct_mapping[segment])
+        translated_outputs.append(translated_digit)
+
+    return translated_outputs
+
+
 if __name__ == '__main__':
     data = read_data('day_8.txt')
 
-    examples = 'acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf'
-    example_input, example_output = examples.split(' | ')
-    examples_input = example_input.split(' ')
-    example_output = example_output.split(' ')
+    # The actual mapping from digit to segments
+    digit_to_segments = {
+        0: {'A', 'B', 'C', 'E', 'F', 'G'},
+        1: {'C', 'F'},
+        2: {'A', 'C', 'D', 'E', 'G'},
+        3: {'A', 'C', 'D', 'F', 'G'},
+        4: {'B', 'C', 'D', 'F'},
+        5: {'A', 'B', 'D', 'F', 'G'},
+        6: {'A', 'B', 'D', 'E', 'F', 'G'},
+        7: {'A', 'C', 'F'},
+        8: {'A', 'B', 'C', 'D', 'E', 'F', 'G'},
+        9: {'A', 'B', 'C', 'D', 'F', 'G'},
+    }
 
-    correct_mapping = get_segment_mapping(examples_input)
-    print(correct_mapping)
+    answer = 0
+    for line in data:
+        example_input, example_output = line.split(' | ')
+        examples_input = example_input.split(' ')
+        example_output = example_output.split(' ')
+
+        correct_mapping = get_segment_mapping(examples_input, digit_to_segments)
+        translation = translate(example_output, correct_mapping)
+
+        translation_digits = []
+        for word in translation:
+            for key, value in digit_to_segments.items():
+                if value == word:
+                    translation_digits.append(key)
+
+        answer += int(''.join([str(i) for i in translation_digits]))
+
+    print('Answer:', answer)
