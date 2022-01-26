@@ -29,15 +29,46 @@ if __name__ == '__main__':
     }
 
     score = 0
+    uncorrupted = []
     for line in data:
-        fifo = deque([])
+        ok = True
+        lifo = deque([])
         for bracket in line:
             if bracket in bracket_mapping:
-                fifo.append(bracket)
+                lifo.append(bracket)
             else:
-                b = fifo.pop()
+                b = lifo.pop()
                 if bracket_mapping[b] != bracket:
                     score += bracket_scores[bracket]
+                    ok = False
                     break
+        if ok:
+            uncorrupted.append(line)
 
     print('Answer part 1:', score)
+
+    incomplete_scores = {
+        '(': 1,
+        '[': 2,
+        '{': 3,
+        '<': 4
+    }
+
+    line_scores = []
+    for line in uncorrupted:
+        line_score = 0
+        lifo = deque([])
+        for bracket in line:
+            if bracket in bracket_mapping:
+                lifo.append(bracket)
+            else:
+                b = lifo.pop()
+
+        while lifo:
+            b = lifo.pop()
+            line_score *= 5
+            line_score += incomplete_scores[b]
+        line_scores.append(line_score)
+
+    line_scores.sort()
+    print('Answer part 2:', line_scores[len(line_scores) // 2])
