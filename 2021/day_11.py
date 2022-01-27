@@ -37,8 +37,8 @@ if __name__ == '__main__':
     data = read_data('day_11.txt')
     size_x, size_y = data.shape
 
-    num_flashes = 0
-    for i in range(100):
+    iteration = 1
+    while True:
 
         # 1. Increase energy of all elements
         data = increase_energy(data)
@@ -59,10 +59,10 @@ if __name__ == '__main__':
 
         # 5. Done with this time step - Set all elements that have flashed to 0
         data[flash_mask == 1] = 0
-        num_flashes += np.count_nonzero(flash_mask)
 
-        print('After iteration', i+1)
-        print(data)
+        if not np.any(data):
+            break
+        iteration += 1
 
-    print('Number of flashes', num_flashes)
+    print('Number of iterations to sync', iteration)
 
