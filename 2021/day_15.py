@@ -99,7 +99,6 @@ def get_shortest_path(parents, end_node):
 if __name__ == '__main__':
     """
     Task is to get from top left corner to bottom right corner of a grid in shortest path.
-    Can only move right, down or on diagonal between these 2.
     Grid elements give the cost of the move.
 
     Solution:
@@ -110,7 +109,6 @@ if __name__ == '__main__':
 
     # Have a grid of numbers - gives the cost of travelling through that node
     # Start in top left, finish in bottom right
-    # Allow moving right, down & diagonal in between
     matrix = read_data('day_15.txt')
     matrix = create_larger_map(matrix)
     start_node = (0, 0)
