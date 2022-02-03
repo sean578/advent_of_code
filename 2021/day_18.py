@@ -1,4 +1,5 @@
 import re
+import math
 
 
 def read_data(filename):
@@ -37,16 +38,10 @@ def check_for_split(data):
     # Are any numbers 10 or greater?
     # Return start & end index of first digit of number which is 10 or greater
 
-    match = re.search('\d\d+', data)
-    if match:
-        return match.start(), match.end()
-    else:
-        return None
+    return re.search('\d\d+', data)
 
 
 def do_explode(data, index):
-
-    # TODO: Use sub instead of having to do all of this indexing...
 
     # Get the indicies and number that are to be replaced
     left_number = re.search("\[\d+", data[index:])
@@ -74,18 +69,23 @@ def do_explode(data, index):
     return data
 
 
-def do_split(data, index_start, index_end):
-    pass
+def do_split(data, split_match):
+
+    i, j = split_match.start(), split_match.end()
+    d = split_match.group(0)
+
+    a = str(math.floor(int(d) / 2))
+    b = str(math.ceil(int(d) / 2))
+
+    return data[:i] + '[' + a + ',' + b + ']' + data[j:]
 
 
 if __name__ == '__main__':
     data = read_data('day_18.txt')
 
+    # Test data
     a = '[[[[4,3],4],4],[7,[[8,4],9]]]'
     b = '[1,1]'
-
-    a_plus_b = do_addition(a, b)
-    print('a + b = ', a_plus_b)
 
     explode_1 = '[[[[[9,8],1],2],3],4]'
     explode_2 = '[7,[6,[5,[4,[3,2]]]]]'
@@ -93,21 +93,23 @@ if __name__ == '__main__':
     explode_4 = '[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]'
     explode_5 = '[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]'
 
-    index_to_explode = check_for_explode(explode_1)
-    print('Index to explode = ', index_to_explode)
-
     split_1 = '[[[[0,7],4],[15,[0,13]]],[1,1]]'
     split_2 = '[[[[0,7],4],[[7,8],[0,13]]],[1,1]]'
 
-    indicies = check_for_split(split_1)
-    if indicies:
-        start, end = indicies
-        print('Indicies of number to split:', start, end)
-        print('Number to split:', split_1[start:end])
-    else:
-        print('Nothing to split')
+    # Test addition
+    """
+    a_plus_b = do_addition(a, b)
+    print('a + b = ', a_plus_b)
+    """
+
+    # Check for explode
+    """
+    index_to_explode = check_for_explode(explode_1)
+    print('Index to explode = ', index_to_explode)
+    """
 
     # Do explode
+    """
     print('-------------------------------------')
     d = explode_1
     print('Tring exploding on:', d)
@@ -115,3 +117,18 @@ if __name__ == '__main__':
     if index:
         data = do_explode(d, index)
         print('Data after exploding:', data)
+    """
+
+    # Check for split
+    split_match = check_for_split(split_2)
+    if split_match:
+        start, end = split_match.start(), split_match.end()
+        split = split_match.group(0)
+        print('Indicies of number to split:', start, end)
+        print('Number to split:', split)
+    else:
+        print('Nothing to split')
+
+    # Do split
+    data = do_split(split_2, split_match)
+    print('Data after split:', data)
