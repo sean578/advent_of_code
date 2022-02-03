@@ -46,7 +46,6 @@ def do_explode(data, index):
     # Get the indicies and number that are to be replaced
     left_number = re.search("\[\d+", data[index:])
     right_number = re.search("\d+\]", data[index:])
-    print('left_number, right_number:', left_number.group(0)[1:], right_number.group(0)[:-1])
 
     if left_number and right_number:
         # Replace the number to the right
@@ -57,15 +56,18 @@ def do_explode(data, index):
             data = data[:index + right_number.end()] + new_data_part
 
         # Replace the number to the left
-        l = len(data[:index][right_number.end():])
         left_number_to_update = re.search("\d+", data[:index][right_number.end():][::-1])  # Look in reverse direction
         if left_number_to_update:
             new_number = str(int(left_number_to_update.group(0)) + int(left_number.group(0)[1:]))
-            new_data_part = re.sub("\d+", new_number, data[:index][::-1], count=1)
-            data = new_data_part[::-1] + data[index + left_number.start():]
+            last_pos = data[:index + left_number.start()].rfind(left_number_to_update.group(0))
+            new_data_part = data[:last_pos] + new_number + data[:index + left_number.start()][- len(new_number):]
+            data = new_data_part + data[index + left_number.start():]
 
         # Replace the exploded pair with zero
-        data = data[:index] + '0' + data[index + right_number.end():]
+        if left_number_to_update:
+            data = data[:index + len(new_number)-1] + '0' + data[index  + len(new_number)-1 + right_number.end():]
+        else:
+            data = data[:index] + '0' + data[index + right_number.end():]
     return data
 
 
@@ -81,7 +83,7 @@ def do_split(data, split_match):
 
 
 if __name__ == '__main__':
-    data = read_data('day_18.txt')
+    # data = read_data('day_18.txt')
 
     # Test data
     a = '[[[[4,3],4],4],[7,[[8,4],9]]]'
@@ -92,9 +94,32 @@ if __name__ == '__main__':
     explode_3 = '[[6,[5,[4,[3,2]]]],1]'
     explode_4 = '[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]'
     explode_5 = '[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]'
+    explode_6 = '[[[[0,7],4],[7,[[8,4],9]]],[1,1]]'
 
     split_1 = '[[[[0,7],4],[15,[0,13]]],[1,1]]'
     split_2 = '[[[[0,7],4],[[7,8],[0,13]]],[1,1]]'
+
+    # Do addition
+    print('Before addition:', a, '+', b)
+    data = do_addition(a, b)
+    print('After addition:', data)
+
+    # Do reduction
+    done = False
+    while not done:
+        index_to_explode = check_for_explode(data)
+        if index_to_explode:
+            data = do_explode(data, index_to_explode)
+            print('After explode:', data)
+            continue
+        split_match = check_for_split(data)
+        if split_match:
+            data = do_split(data, split_match)
+            print('After split:', data)
+            continue
+        done = True
+    print('After reduction:', data)
+
 
     # Test addition
     """
@@ -104,22 +129,21 @@ if __name__ == '__main__':
 
     # Check for explode
     """
-    index_to_explode = check_for_explode(explode_1)
+    data = explode_6
+    index_to_explode = check_for_explode(data)
     print('Index to explode = ', index_to_explode)
-    """
 
     # Do explode
-    """
     print('-------------------------------------')
-    d = explode_1
-    print('Tring exploding on:', d)
-    index = check_for_explode(d)
+    print('Tring exploding on:', data)
+    index = check_for_explode(data)
     if index:
-        data = do_explode(d, index)
+        data = do_explode(data, index)
         print('Data after exploding:', data)
     """
 
     # Check for split
+    """
     split_match = check_for_split(split_2)
     if split_match:
         start, end = split_match.start(), split_match.end()
@@ -128,7 +152,10 @@ if __name__ == '__main__':
         print('Number to split:', split)
     else:
         print('Nothing to split')
+    """
 
     # Do split
+    """
     data = do_split(split_2, split_match)
     print('Data after split:', data)
+    """
