@@ -83,18 +83,30 @@ def add(depth_list_a, depth_list_b):
     return depth_list_a + depth_list_b
 
 
+def find_mag(depth_list):
+    while(len(depth_list) > 1):
+        # Find max depth in list
+        max_depth = max([i[0] for i in depth_list])
+        depth_list_new = []
+        # For each pair at max depth find mag and reduce depth by 1 (2 numbers -> 1)
+        i = 0
+        while i < len(depth_list):
+            if depth_list[i][0] == max_depth:
+                a = depth_list[i][1]
+                b = depth_list[i+1][1]
+                mag = 3*a + 2*b
+                depth_list_new.append([depth_list[i][0] - 1, mag])
+            else:
+                depth_list_new.append(depth_list[i])
+                depth_list_new.append(depth_list[i+1])
+            i += 2
+
+        depth_list = copy.deepcopy(depth_list_new)
+    return depth_list[0][1]
+
+
 if __name__ == '__main__':
     data = read_data('day_18.txt')
-
-    # data = '[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]'
-    # data = '[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]'
-    #
-    # data_a = '[[[[4,3],4],4],[7,[[8,4],9]]]'
-    # data_b = '[1,1]'
-
-    # depth_list_a = create_depth_list(data_a)
-    # depth_list_b = create_depth_list(data_b)
-
     data = list(map(create_depth_list, data))
 
     depth_list = data[0]
@@ -115,3 +127,6 @@ if __name__ == '__main__':
 
     print(depth_list)
     print([[i[1]] for i in depth_list])
+
+    mag = find_mag(depth_list)
+    print('mag', mag)
