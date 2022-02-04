@@ -1,4 +1,4 @@
-import re
+import copy
 import math
 
 
@@ -6,156 +6,112 @@ def read_data(filename):
     return [line.strip() for line in open(filename).readlines()]
 
 
-def do_addition(a, b):
-    # Add without any reducing
-    return '[' + a + ',' + b + ']'
+def create_depth_list(data):
+    # Assumes input is all single digits which seems to be the case (all valid snailfish numbers)
+    depth_list = []  # depth, value
 
-
-def do_reduction():
-    # Keep doing explodes & splits until reduced
-    pass
-
-
-def check_for_explode(data):
-    # Are any pairs nested 4 deep?
-    # Return index of open bracket of first pair that needs exploding
-
-    nest_level = 0
-    for i, char in enumerate(data):
-        if char == '[':
-            nest_level += 1
-            if nest_level == 5:
-                return i
-        elif char == ']':
-            nest_level -= 1
-
-    if nest_level != 0:
-        print('Bracket error')
-    return None
-
-
-def check_for_split(data):
-    # Are any numbers 10 or greater?
-    # Return start & end index of first digit of number which is 10 or greater
-
-    return re.search('\d\d+', data)
-
-
-def do_explode(data, index):
-
-    # Get the indicies and number that are to be replaced
-    left_number = re.search("\[\d+", data[index:])
-    right_number = re.search("\d+\]", data[index:])
-
-    if left_number and right_number:
-        # Replace the number to the right
-        right_number_to_update = re.search("\d+", data[index:][right_number.end():])
-        if right_number_to_update:
-            new_number = str(int(right_number_to_update.group(0)) + int(right_number.group(0)[:-1]))
-            new_data_part = re.sub("\d+", new_number, data[index:][right_number.end():], count=1)
-            data = data[:index + right_number.end()] + new_data_part
-
-        # Replace the number to the left
-        left_number_to_update = re.search("\d+", data[:index][right_number.end():][::-1])  # Look in reverse direction
-        if left_number_to_update:
-            new_number = str(int(left_number_to_update.group(0)) + int(left_number.group(0)[1:]))
-            last_pos = data[:index + left_number.start()].rfind(left_number_to_update.group(0))
-            new_data_part = data[:last_pos] + new_number + data[:index + left_number.start()][- len(new_number):]
-            data = new_data_part + data[index + left_number.start():]
-
-        # Replace the exploded pair with zero
-        if left_number_to_update:
-            data = data[:index + len(new_number)-1] + '0' + data[index  + len(new_number)-1 + right_number.end():]
+    l = 0
+    for d in data:
+        if d == '[':
+            l += 1
+        elif d == ']':
+            l -= 1
+        elif d == ',':
+            pass
         else:
-            data = data[:index] + '0' + data[index + right_number.end():]
-    return data
+            # We have a number
+            depth_list.append([l, int(d)])
+
+    if l != 0:
+        print('Brackets not closed correctly')
+        return None
+    else:
+        return depth_list
 
 
-def do_split(data, split_match):
+def explode(depth_list):
+    # return true if have done an explosion
+    depth_list_new = copy.deepcopy(depth_list)
 
-    i, j = split_match.start(), split_match.end()
-    d = split_match.group(0)
+    exploded = False
+    for i, leaf in enumerate(depth_list):
+        if leaf[0] == 5:
+            exploded = True
+            # If there is a number to the left
+            if i > 0:
+                depth_list_new[i-1][1] += depth_list[i][1]
+            if i < len(depth_list)-2:
+                depth_list_new[i+2][1] += depth_list[i+1][1]
 
-    a = str(math.floor(int(d) / 2))
-    b = str(math.ceil(int(d) / 2))
+            del depth_list_new[i]
+            depth_list_new[i][0] -= 1
+            depth_list_new[i][1] = 0
+            break
 
-    return data[:i] + '[' + a + ',' + b + ']' + data[j:]
+    return exploded, depth_list_new
+
+
+def split(depth_list):
+
+    depth_list_new = copy.deepcopy(depth_list)
+
+    splitted = False
+    for i, leaf in enumerate(depth_list):
+        if leaf[1] > 9:
+            splitted = True
+            # Replace the single number with two numbers one level deeper
+            a = math.floor(leaf[1] / 2)
+            b = math.ceil(leaf[1] / 2)
+            depth = leaf[0] + 1
+            depth_list_new.insert(i, [depth, a])
+            depth_list_new.insert(i+1, [depth, b])
+            del depth_list_new[i+2]
+            break
+
+    return splitted, depth_list_new
+
+
+def add(depth_list_a, depth_list_b):
+
+    # All values go one level deeper
+    for i, val in enumerate(depth_list_a):
+        depth_list_a[i][0] += 1
+
+    for i, val in enumerate(depth_list_b):
+        depth_list_b[i][0] += 1
+
+    return depth_list_a + depth_list_b
 
 
 if __name__ == '__main__':
-    # data = read_data('day_18.txt')
+    data = read_data('day_18.txt')
 
-    # Test data
-    a = '[[[[4,3],4],4],[7,[[8,4],9]]]'
-    b = '[1,1]'
+    # data = '[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]'
+    # data = '[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]'
+    #
+    # data_a = '[[[[4,3],4],4],[7,[[8,4],9]]]'
+    # data_b = '[1,1]'
 
-    explode_1 = '[[[[[9,8],1],2],3],4]'
-    explode_2 = '[7,[6,[5,[4,[3,2]]]]]'
-    explode_3 = '[[6,[5,[4,[3,2]]]],1]'
-    explode_4 = '[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]'
-    explode_5 = '[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]'
-    explode_6 = '[[[[0,7],4],[7,[[8,4],9]]],[1,1]]'
+    # depth_list_a = create_depth_list(data_a)
+    # depth_list_b = create_depth_list(data_b)
 
-    split_1 = '[[[[0,7],4],[15,[0,13]]],[1,1]]'
-    split_2 = '[[[[0,7],4],[[7,8],[0,13]]],[1,1]]'
+    data = list(map(create_depth_list, data))
 
-    # Do addition
-    print('Before addition:', a, '+', b)
-    data = do_addition(a, b)
-    print('After addition:', data)
+    depth_list = data[0]
+    for line in data[1:]:
 
-    # Do reduction
-    done = False
-    while not done:
-        index_to_explode = check_for_explode(data)
-        if index_to_explode:
-            data = do_explode(data, index_to_explode)
-            print('After explode:', data)
-            continue
-        split_match = check_for_split(data)
-        if split_match:
-            data = do_split(data, split_match)
-            print('After split:', data)
-            continue
-        done = True
-    print('After reduction:', data)
+        # add the numbers
+        depth_list = add(depth_list, line)
 
+        # do the reduction
+        while True:
+            exploded, depth_list = explode(depth_list)
+            if exploded:
+                continue
+            splitted, depth_list = split(depth_list)
+            if splitted:
+                continue
+            break
 
-    # Test addition
-    """
-    a_plus_b = do_addition(a, b)
-    print('a + b = ', a_plus_b)
-    """
-
-    # Check for explode
-    """
-    data = explode_6
-    index_to_explode = check_for_explode(data)
-    print('Index to explode = ', index_to_explode)
-
-    # Do explode
-    print('-------------------------------------')
-    print('Tring exploding on:', data)
-    index = check_for_explode(data)
-    if index:
-        data = do_explode(data, index)
-        print('Data after exploding:', data)
-    """
-
-    # Check for split
-    """
-    split_match = check_for_split(split_2)
-    if split_match:
-        start, end = split_match.start(), split_match.end()
-        split = split_match.group(0)
-        print('Indicies of number to split:', start, end)
-        print('Number to split:', split)
-    else:
-        print('Nothing to split')
-    """
-
-    # Do split
-    """
-    data = do_split(split_2, split_match)
-    print('Data after split:', data)
-    """
+    print(depth_list)
+    print([[i[1]] for i in depth_list])
