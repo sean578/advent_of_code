@@ -43,9 +43,7 @@ def rotate_vectors(beacons, num_rotations, rotation_group):
 
 
 if __name__ == '__main__':
-    scans = read_data('day_19_test.txt')
-
-    # for scanner 1..n while all overlaps not found
+    scans = read_data('day_19.txt')
     num_scanners = len(scans)
     print('Number of scanners:', num_scanners)
 
@@ -56,37 +54,34 @@ if __name__ == '__main__':
     rotations_to_abs[0] = 0
     rotation_group = scipy.spatial.transform.Rotation.create_group('O').as_matrix()
 
-    scans_done = {0}
+    scans_done = {0: copy.deepcopy(scans[0])}
+
     while len(scans_done) < num_scanners:
-        print('Scanners done progress:', scans_done)
-        for done_number in copy.deepcopy(scans_done):
-            for i, beacon_abs in enumerate(scans[done_number]):
-                x = set([tuple(i) for i in scans[done_number]])
+        print('Number of scanners done:', len(scans_done.keys()))
+        to_try = tuple(scans_done.keys())
+        for done_number in to_try:
+            for i, beacon_abs in enumerate(scans_done[done_number]):
+                x = set([tuple(i) for i in scans_done[done_number]])
                 for scanner_number in range(1, num_scanners):
                     if scanner_number not in scans_done:
-                        for num_rotations in range(24):
+                        for num_rotations in range(25):
                             beacons = copy.deepcopy(scans[scanner_number])
                             beacons_rotated = rotate_vectors(beacons, num_rotations, rotation_group)
-                            # beacons_rotated = rotate_vectors(beacons_rotated, num_rotations)
                             for j, beacon_rel in enumerate(beacons_rotated):
-                                # Find transformation such that the two beacons overlap
                                 translation = beacon_abs - beacon_rel
-                                # Transform into abs coords
                                 beacon_in_abs = beacons_rotated + translation
-                                # TODO: Find a numpy way to do the number of common rows to speed up...
                                 y = set([tuple(i) for i in beacon_in_abs])
                                 num_overlap = len(x.intersection(y))
-                                if num_overlap == 12:
-                                    translations_to_abs[scanner_number] = translation
+                                if num_overlap >= 12:
+                                    translations_to_abs[scanner_number] = translation  # The translation required, after rotation has been applied
                                     rotations_to_abs[scanner_number] = num_rotations
-                                    scans_done.add(scanner_number)
+                                    scans_done[scanner_number] = beacon_in_abs  # Apply the rotation then translation here
                                     break
 
-    print('Scans done:', scans_done)
-    print('Translations to abs:', translations_to_abs)
-    print('Rotations to abs:', rotations_to_abs)
+    # Part 1 answer
+    the_beacons = set()
+    for scanner in scans_done.values():
+        for beacon in scanner:
+            the_beacons.add(tuple(beacon))
 
-
-
-    # TODO: Use translations & rotations found to convert all beacons to absolute coords and add to set
-    # TODO: Answer for part 1 is the length of that set
+    print('Answer part 1:', len(the_beacons))
