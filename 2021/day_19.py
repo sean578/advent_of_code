@@ -1,4 +1,4 @@
-from collections import defaultdict
+import scipy.spatial.transform
 import numpy as np
 import copy
 
@@ -6,7 +6,7 @@ import copy
 def read_data(filename):
     lines = [line.strip() for line in open(filename).readlines()]
 
-    scans = defaultdict(None)
+    scans = {}
 
     scanner_number = -1
     first = False
@@ -27,32 +27,19 @@ def read_data(filename):
     return scans
 
 
-def rotate(v, dir):
-    if dir == 'R':
-        return v @ np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
-    elif dir == 'T':
-        return v @ np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
-    else:
-        print('Incorrect direction:', dir)
+def rotate_vectors(beacons, num_rotations, rotation_group):
+    # Beacons shape: # beacons * 3 coords
 
-
-def rotate_vectors(beacons, num_rotations):
-
-    a = 'RTTTRTTTRTTT'
-    turn_around = 'RTR'
-
-    if num_rotations == -1:
+    # If no rotation to be done, return original matrix
+    if num_rotations == 0:
         return beacons
-    elif num_rotations < 12:
-        beacons = rotate(beacons, a[num_rotations])
-    elif num_rotations == 12:
-        for i in turn_around:
-            beacons = rotate(beacons, i)
-        beacons = rotate(beacons, a[num_rotations % 12])
-    else:
-        beacons = rotate(beacons, a[num_rotations % 12])
 
-    return beacons
+    # Wrap around so number of rotations is less than 24
+    while num_rotations > 24:
+        num_rotations = num_rotations % 24
+
+    # Do the transformation
+    return (beacons @ rotation_group[num_rotations - 1]).astype(np.int16)
 
 
 if __name__ == '__main__':
@@ -67,6 +54,7 @@ if __name__ == '__main__':
 
     rotations_to_abs = {key: None for key in scans}
     rotations_to_abs[0] = 0
+    rotation_group = scipy.spatial.transform.Rotation.create_group('O').as_matrix()
 
     scans_done = {0}
     while len(scans_done) < num_scanners:
@@ -76,9 +64,10 @@ if __name__ == '__main__':
                 x = set([tuple(i) for i in scans[done_number]])
                 for scanner_number in range(1, num_scanners):
                     if scanner_number not in scans_done:
-                        beacons_rotated = copy.deepcopy(scans[scanner_number])
                         for num_rotations in range(24):
-                            beacons_rotated = rotate_vectors(beacons_rotated, num_rotations)
+                            beacons = copy.deepcopy(scans[scanner_number])
+                            beacons_rotated = rotate_vectors(beacons, num_rotations, rotation_group)
+                            # beacons_rotated = rotate_vectors(beacons_rotated, num_rotations)
                             for j, beacon_rel in enumerate(beacons_rotated):
                                 # Find transformation such that the two beacons overlap
                                 translation = beacon_abs - beacon_rel
