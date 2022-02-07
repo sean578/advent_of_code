@@ -1,4 +1,5 @@
 import scipy.spatial.transform
+from scipy.spatial.distance import cdist
 import numpy as np
 import copy
 
@@ -83,5 +84,20 @@ if __name__ == '__main__':
     for scanner in scans_done.values():
         for beacon in scanner:
             the_beacons.add(tuple(beacon))
-
     print('Answer part 1:', len(the_beacons))
+
+    # Part 2 answer
+    print(translations_to_abs)
+    save_filename = 'day_19_part_1_result.npy'
+    np.save(save_filename, translations_to_abs, allow_pickle=True)
+
+    sp = np.load('/home/sean/Documents/repos/advent_of_code/2021/day_19_part_1_result.npy', allow_pickle=True)
+
+    x = sp.item().values()
+    max_manhattan = 0
+    for a in x:
+        for b in x:
+            man = np.sum(np.abs(a - b))
+        if man > max_manhattan:
+            max_manhattan = man
+    print('Max manhattan distance:', max_manhattan)
