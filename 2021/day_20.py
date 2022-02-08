@@ -29,16 +29,14 @@ def get_neighbours(image, image_shape, deltas, loc):
 
 
 if __name__ == '__main__':
-    image_enhancement, image = read_data('day_20_test.txt')
+    image_enhancement, image = read_data('day_20.txt')
+    num_enhancements = 50
 
-    image = np.pad(image, pad_width=3, mode='constant', constant_values=0)
+    image = np.pad(image, pad_width=num_enhancements + 3, mode='constant', constant_values=0)
 
     print('Image enhancement size:', image_enhancement.shape)
     image_shape = image.shape
     print('Image size:', image.shape)
-
-    # print(image_enhancement)
-
 
     deltas = [
         (-1, -1), (-1, 0), (-1, 1),
@@ -46,10 +44,8 @@ if __name__ == '__main__':
         (1, -1), (1, 0), (1, 1)
     ]  # y, x
 
-    # print(image)
-    # print('---------------------------------')
-    for i in range(2):
-        print(i)
+    for i in range(num_enhancements):
+        print('Enhancement:', i+1)
         image_enhanced = np.zeros_like(image)
         for y in range(image.shape[0]):
             for x in range(image.shape[1]):
@@ -62,9 +58,7 @@ if __name__ == '__main__':
         image_enhanced[:, 0] = image_enhanced[1, 1]
         image_enhanced[:, -1] = image_enhanced[1, 1]
         image = copy.deepcopy(image_enhanced)
-    # print(image)
-    # print('---------------------------------')
 
     num_pixels_lit = np.count_nonzero(image)
-    print('Answer:', num_pixels_lit)
+    print('Number of pixels lit:', num_pixels_lit)
 
