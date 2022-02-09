@@ -1,15 +1,26 @@
-import numpy as np
+from dataclasses import dataclass
+
+
+@dataclass
+class Cuboid:
+    x_min: int = 0
+    x_max: int = 0
+    y_min: int = 0
+    y_max: int = 0
+    z_min: int = 0
+    z_max: int = 0
+    sign: int = 1
+    instruct: str = None
 
 
 def read_data(filename):
     lines = [line.strip().split(' ') for line in open(filename).readlines()]
 
-    instruct = []
-    xs = []
-    ys = []
-    zs = []
+    cuboids = []
     for line in lines:
-        instruct.append(line[0])
+        c = Cuboid()
+
+        c.instruct = line[0]
         x, y, z = line[1].split(',')
         x = x[2:]
         y = y[2:]
@@ -18,42 +29,98 @@ def read_data(filename):
         x = tuple([int(i) for i in x.split('..')])
         y = tuple([int(i) for i in y.split('..')])
         z = tuple([int(i) for i in z.split('..')])
-        xs.append(x)
-        ys.append(y)
-        zs.append(z)
 
-    return list(zip(instruct, xs, ys, zs))
+        c.x_min, c.x_max = x
+        c.y_min, c.y_max = y
+        c.z_min, c.z_max = z
+
+        cuboids.append(c)
+
+    return cuboids
 
 
-def do_instruction(grid, instruction):
+def get_intersection_cuboid(new_cuboid, current_cuboid):
+    # Return a cuboid of overlap region
 
-    on_off, (x_min, x_max), (y_min, y_max), (z_min, z_max) = instruction
+    # Return None if cuboids don't overlap...
+    if new_cuboid.x_max < current_cuboid.x_min or new_cuboid.y_max < current_cuboid.y_min or new_cuboid.z_max < current_cuboid.z_min:
+        return None
+    if current_cuboid.x_max < new_cuboid.x_min or current_cuboid.y_max < new_cuboid.y_min or current_cuboid.z_max < new_cuboid.z_min:
+        return None
 
-    # Part 1:
-    if (x_min < -50) or (x_max > 50) or (y_min < -50) or (y_max > 50) or (z_min < -50) or (z_max > 50):
-        print('Skip')
-        return grid
-    else:
-        if on_off == 'on':
-            val = 1
-        elif on_off == 'off':
-            val = 0
-        else:
-            print('Incorrect on_off:', on_off)
+    c = Cuboid()
+    c.instruct = 'Intersection'
+    if new_cuboid.sign == current_cuboid.sign:
+        c.sign = -current_cuboid.sign
+    elif current_cuboid.sign == -1 and new_cuboid.sign == 1:
+        c.sign = 1
+    elif current_cuboid.sign == 1 and new_cuboid.sign == -1:
+        c.sign = -1
+     
+    c.x_min = max(new_cuboid.x_min, current_cuboid.x_min)
+    c.x_max = min(new_cuboid.x_max, current_cuboid.x_max)
+    
+    c.y_min = max(new_cuboid.y_min, current_cuboid.y_min)
+    c.y_max = min(new_cuboid.y_max, current_cuboid.y_max)
+    
+    c.z_min = max(new_cuboid.z_min, current_cuboid.z_min)
+    c.z_max = min(new_cuboid.z_max, current_cuboid.z_max)
 
-        grid[50+x_min:50+x_max+1, 50+y_min:50+y_max+1, 50+z_min:50+z_max+1] = val
-        return grid
+    return c
+
+
+def get_cube_size(c):
+    size = (c.x_max + 1 - c.x_min) * (c.y_max + 1 - c.y_min) * (c.z_max + 1 - c.z_min)
+    size *= c.sign
+    return size
 
 
 if __name__ == '__main__':
-    instructions = read_data('day_22.txt')
-    for i in instructions:
-        print(i)
+    cuboids = read_data('day_22.txt')
 
-    size = 101
-    grid = np.zeros((size, size, size), np.uint8)
-    for i in instructions:
-        grid = do_instruction(grid, i)
+    """
+    Part 2 idea
+    Top-level: Add -ive boxes for overlaps when required.
 
-    answer = np.count_nonzero(grid)
-    print('Answer:', answer)
+    Loop through cuboids, adding into a new set of cuboids.
+    Each time a cuboid added, check overlaps with each of the cuboids already in the set.
+    Use -ive cuboids when 2 +ive cubes overlap or when a new off cuboid overlaps with a +ive cuboid
+    
+    Rules:
+    Add new cuboid = add a single time after all overlaps have been checked.
+    
+    New cuboid,     In set,     Todo
+    On              On          Add new cuboid. Add -ive cuboid for overlapping region.
+    Off             Off         Nothing.
+    On              Off         Add new cuboid.
+    Off             On          Add -ive cuboid for overlapping region.
+    """
+
+    the_cuboids = [cuboids[0]]  # Assumes first cuboid is 'on'
+
+    # Iterate through each new cuboid
+    i = 0
+    for new_cuboid in cuboids[1:]:
+        print(f'Status: {100 * i / len(cuboids):.1f} %')
+        i += 1
+
+        # tc = copy.deepcopy(the_cuboids)
+        new_intersections = []
+
+        # Check against all current cuboids
+        for current_cuboid in the_cuboids:
+            intersection = get_intersection_cuboid(new_cuboid, current_cuboid)
+            if intersection:
+                new_intersections.append(intersection)
+
+        # Finally add the cuboid if on
+        if new_cuboid.instruct == 'on':
+            new_intersections.append(new_cuboid)
+
+        the_cuboids += new_intersections
+
+    # Sum up the cube sizes
+    the_sum = 0
+    for c in the_cuboids:
+        the_sum += get_cube_size(c)
+    print('Total sum:', the_sum)
