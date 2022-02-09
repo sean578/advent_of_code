@@ -78,24 +78,6 @@ def get_cube_size(c):
 if __name__ == '__main__':
     cuboids = read_data('day_22.txt')
 
-    """
-    Part 2 idea
-    Top-level: Add -ive boxes for overlaps when required.
-
-    Loop through cuboids, adding into a new set of cuboids.
-    Each time a cuboid added, check overlaps with each of the cuboids already in the set.
-    Use -ive cuboids when 2 +ive cubes overlap or when a new off cuboid overlaps with a +ive cuboid
-    
-    Rules:
-    Add new cuboid = add a single time after all overlaps have been checked.
-    
-    New cuboid,     In set,     Todo
-    On              On          Add new cuboid. Add -ive cuboid for overlapping region.
-    Off             Off         Nothing.
-    On              Off         Add new cuboid.
-    Off             On          Add -ive cuboid for overlapping region.
-    """
-
     the_cuboids = [cuboids[0]]  # Assumes first cuboid is 'on'
 
     # Iterate through each new cuboid
