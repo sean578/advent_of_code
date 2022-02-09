@@ -50,12 +50,7 @@ def get_intersection_cuboid(new_cuboid, current_cuboid):
 
     c = Cuboid()
     c.instruct = 'Intersection'
-    if new_cuboid.sign == current_cuboid.sign:
-        c.sign = -current_cuboid.sign
-    elif current_cuboid.sign == -1 and new_cuboid.sign == 1:
-        c.sign = 1
-    elif current_cuboid.sign == 1 and new_cuboid.sign == -1:
-        c.sign = -1
+    c.sign = -current_cuboid.sign
      
     c.x_min = max(new_cuboid.x_min, current_cuboid.x_min)
     c.x_max = min(new_cuboid.x_max, current_cuboid.x_max)
