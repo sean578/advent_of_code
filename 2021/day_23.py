@@ -81,10 +81,12 @@ def find_blocking_pos(hallway_pos, amphipod):
     return lb, sb
 
 
-def get_neighbours(state):
-    # Todo: have to get weight for each of these movements too
+def number_moves(x_initial, y_initial, x_final, y_final):
+    return abs(y_final - y_initial) + abs(x_final - x_initial)
 
-    neighbours = defaultdict(list)  # index: (x, y) tuples. Index is index in state list
+
+def get_neighbours(state):
+    neighbours = defaultdict(list)  # index: (x, y, energy) tuples. Index is index in state list
 
     allowed_room_x = {
         'A': 2,
@@ -93,16 +95,22 @@ def get_neighbours(state):
         'D': 8
     }
 
+    energy_dict = {
+        'A': 1,
+        'B': 10,
+        'C': 100,
+        'D': 1000,
+    }
+
     hallway_pos = get_hallway_positions(state)
 
     for i, a in enumerate(state):
         if a.room:
-            # Can move into hallway
             lb, sb = find_blocking_pos(hallway_pos, a)
             for x in range(lb+1, sb):
                 if x in (0, 1, 3, 5, 7, 9, 10):
-                    neighbours[i].append((x, 2))
-        elif not a.room:
+                    neighbours[i].append((x, 2, energy_dict[a.color] * number_moves(a.x, a.y, x, 2)))
+        else:
             home_x = allowed_room_x[a.color]
             y0_occ = False
             y1_occ = False
@@ -112,16 +120,13 @@ def get_neighbours(state):
                     if b.color != a.color or b.y == 1:
                         y1_occ = True  # May not actually be occupied but using to say it is blocked
 
-            if y0_occ and y1_occ:
-                # No options
-                pass
-            else:
+            if not (y0_occ and y1_occ):
                 lb, sb = find_blocking_pos(hallway_pos, a)
                 if home_x in range(lb+1, sb):
                     if y0_occ:
-                        neighbours[i].append((home_x, 1))
+                        neighbours[i].append((home_x, 1, energy_dict[a.color] * number_moves(a.x, a.y, home_x, 1)))
                     else:
-                        neighbours[i].append((home_x, 0))
+                        neighbours[i].append((home_x, 0, energy_dict[a.color] * number_moves(a.x, a.y, home_x, 0)))
 
     return neighbours
 
@@ -138,7 +143,9 @@ def make_move(state, neighbours, index, move_number):
 
     state[index].x = neighbours[index][move_number][0]
 
-    return state
+    energy = neighbours[index][move_number][2]
+
+    return state, energy
 
 
 if __name__ == '__main__':
@@ -152,6 +159,7 @@ if __name__ == '__main__':
 
     # Try to do the correct path manually
     moves = [(5, 2), (3, 0), (3, 0), (2, 0), (5, 0), (1, 2), (1, 0), (7, 0), (6, 0), (7, 0), (2, 0), (6, 0)]  # index, move number
+    total_energy = 0
     printit = False
     for move in moves:
         neighbours = get_neighbours(state)
@@ -159,5 +167,9 @@ if __name__ == '__main__':
             for key, value in neighbours.items():
                 print(key, state[key])
                 print(value)
-        state = make_move(state, neighbours, *move)
+        state, energy = make_move(state, neighbours, *move)
+        total_energy += energy
+        print('Energy used:', energy)
         print_state(state)
+
+    print('Total energy:', total_energy)
