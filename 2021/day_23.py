@@ -21,7 +21,7 @@ class AmphipodState:
             assert self.y in (0, 1)
         else:
             assert self.x in (0, 1, 3, 5, 7, 9, 10)
-            assert self.y is None
+            assert self.y == 2
 
         assert self.color in ('A', 'B', 'C', 'D')
 
@@ -49,11 +49,10 @@ def print_state(state):
     for x in range(1, xmax-1):
         grid[1][x] = '.'
     for x in (3, 5, 7, 9):
-        grid[2][x] = ' '
-        grid[3][x] = ' '
+        grid[2][x] = '.'
+        grid[3][x] = '.'
     for s in state:
-        if s.room:
-            grid[ymax-s.y-2][s.x+1] = s.color
+        grid[ymax-s.y-2][s.x+1] = s.color
 
     print('State:')
     for l in grid:
@@ -84,14 +83,6 @@ def find_blocking_pos(hallway_pos, amphipod):
 
 def get_neighbours(state):
     # Todo: have to get weight for each of these movements too
-    """
-    If room=True & y=1 can move into hallway (if not blocked)
-        (0, 1, 3, 5, 7, 9, 10) are possible.
-        Check positions of room=False. Can only move from current x to next blocking on x in both directions.
-    If room=False can move into their own room if it is empty or occupied by the same type.
-        If empty goes to y=0, if occupied goes to y=1
-        Also have to check for blocking between the hallway position and the
-    """
 
     neighbours = defaultdict(list)  # index: (x, y) tuples. Index is index in state list
 
@@ -106,14 +97,11 @@ def get_neighbours(state):
 
     for i, a in enumerate(state):
         if a.room:
-            if a.y == 1:
-                # Can move into hallway
-                lb, sb = find_blocking_pos(hallway_pos, a)
-                for x in range(lb, sb+1):
-                    if x in (0, 1, 3, 5, 7, 9, 10):
-                        neighbours[i].append((x, 2))
-
-
+            # Can move into hallway
+            lb, sb = find_blocking_pos(hallway_pos, a)
+            for x in range(lb+1, sb):
+                if x in (0, 1, 3, 5, 7, 9, 10):
+                    neighbours[i].append((x, 2))
         elif not a.room:
             home_x = allowed_room_x[a.color]
             y0_occ = False
@@ -129,7 +117,7 @@ def get_neighbours(state):
                 pass
             else:
                 lb, sb = find_blocking_pos(hallway_pos, a)
-                if home_x in range(lb, sb+1):
+                if home_x in range(lb+1, sb):
                     if y0_occ:
                         neighbours[i].append((home_x, 1))
                     else:
@@ -140,12 +128,13 @@ def get_neighbours(state):
 
 def make_move(state, neighbours, index, move_number):
     # Return updated state of new position after move made
-    # move:
 
-    if neighbours[index][1] == 2:
-        state[index].y = None
+    if neighbours[index][move_number][1] == 2:
+        state[index].y = 2
+        state[index].room = False
     else:
         state[index].y = neighbours[index][move_number][1]
+        state[index].room = True
 
     state[index].x = neighbours[index][move_number][0]
 
@@ -153,42 +142,22 @@ def make_move(state, neighbours, index, move_number):
 
 
 if __name__ == '__main__':
-    """
-    How to define the state:
-        - Position of each amphipod
-        - Set of occupied positions
-        
-    How to generate possible neighbours - what is a move:
-        - Move a single amphipod
-        - Move into a hall position or into a room (don't include in between as more steps)
-        - Cost depends on which room / which room pos / which hall pos / which amphipod type
-        
-    How to deal with not stopping outside rooms:
-        - Normal state, if in this state then only 2 possible neighbours
-        - 
-    
-    
-    Hall has only max 7 positions (not outside rooms)
-    28 initial moves
-    Hall, room by x coord. Then to check possible moves, use hall positions
-    """
 
+    # initial state
     colors = ['A', 'B', 'D', 'C', 'C', 'B', 'A', 'D']
     state = initial_state(colors)
     for a in state:
         print(a)
-
     print_state(state)
 
-    # Get neighbours of state
-    neighbours = get_neighbours(state)
-    for key, value in neighbours.items():
-        print(key, state[key])
-        print(value)
-
-    # Make a move
-    for key in neighbours:
-        for i in range(len(neighbours[1])):
-            state = initial_state(colors)
-            state = make_move(state, neighbours, key, i)
-            print_state(state)
+    # Try to do the correct path manually
+    moves = [(5, 2), (3, 0), (3, 0), (2, 0), (5, 0), (1, 2), (1, 0), (7, 0), (6, 0), (7, 0), (2, 0), (6, 0)]  # index, move number
+    printit = False
+    for move in moves:
+        neighbours = get_neighbours(state)
+        if printit:
+            for key, value in neighbours.items():
+                print(key, state[key])
+                print(value)
+        state = make_move(state, neighbours, *move)
+        print_state(state)
