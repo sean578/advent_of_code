@@ -2,16 +2,7 @@ from dataclasses import dataclass
 from collections import defaultdict
 import heapq
 import math
-
-
-# Full state is 8 * AmphipodState
-# todo: make this simpler, want to quickly check if states are the same and get parents, energy (hashable)
-# @dataclass(frozen=False)
-# class AmphipodState:
-#     """ State for a single amphipod """
-#     color: str
-#     x: int
-#     y: int
+import copy
 
 
 def create_state(state_dict, state_order):
@@ -40,28 +31,32 @@ def print_state(state, state_order):
 
             grid[ymax-e[1]-2][e[0]+1] = state_order[i]
 
-    print('State:')
     for l in grid:
         print(' '.join(l))
 
 
-def get_hallway_positions(state):
+def get_blocks(state):
     # Get a list of x coords that are blocking
-    blocks = set()
-    for a in state:
-        if a.y == 2:
-            blocks.add(a.x)
-
-    return blocks
+    blocks_y1 = set()
+    blocks_y2 = set()
+    for color in state:
+        for a in color:
+            x, y = a
+            if y == 2:
+                blocks_y2.add(x)
+            elif y == 1:
+                blocks_y1.add(x)
+    return blocks_y1, blocks_y2
 
 
 def find_blocking_pos(hallway_pos, amphipod):
+    x, _ = amphipod
     sb = 11  # Smallest blocking above room x
     lb = -1  # Largest blocking below room x
     for hp in hallway_pos:
-        if amphipod.x < hp < sb:
+        if x < hp < sb:
             sb = hp
-        elif lb < hp < amphipod.x:
+        elif lb < hp < x:
             lb = hp
 
     return lb, sb
@@ -71,35 +66,59 @@ def number_moves(x_initial, y_initial, x_final, y_final):
     return abs(y_final - y_initial) + abs(x_final - x_initial)
 
 
-def get_neighbours(state, allowed_room_x, energy_dict):
-    neighbours = defaultdict(list)  # index: (x, y, energy) tuples. Index is index in state list
-    hallway_pos = get_hallway_positions(state)
+def create_new_state(old_state, lc, i, j, new_coords):
+    # From old_state (list of frozen sets) create a full new state (list of frozen sets)
+    # access old coords via i, j
+    # They should be converted into x, y of new_coords
 
-    # todo: Loop over both version of 'A', 'B' etc to see if new state possible
-    for i, a in enumerate(state):
-        e = energy_dict[a.color]
-        home_x = allowed_room_x[a.color]
-        lb, sb = find_blocking_pos(hallway_pos, a)
+    state = copy.deepcopy(old_state)
+    state = [i for i in state]  # Need to be mutible
+    list_coords = copy.deepcopy(lc)
+    list_coords[j] = new_coords
+    state[i] = frozenset(list_coords)
+    return tuple(state)
 
-        if a.y != 2:
-            for x in range(lb+1, sb):
-                if x in (0, 1, 3, 5, 7, 9, 10):
-                    neighbours[i].append((x, 2, e * number_moves(a.x, a.y, x, 2)))
-        else:
-            y0_occ = False
-            y1_occ = False
-            for b in state:
-                if b.y == 0 and b.x == home_x:
+
+def get_neighbours(state, state_order, allowed_room_x, energy_dict):
+    neighbours = {}  # new state: (x, y, delta energy) tuples
+    home_blocks, hallway_pos = get_blocks(state)
+
+    # For each amphipod get its neighbour states
+    for i, color in enumerate(state):
+        e = energy_dict[state_order[i]]
+        home_x = allowed_room_x[state_order[i]]
+        lc = list(color)
+
+        # Find if home of color is occupied
+        y0_occ = False
+        y1_occ = False
+        for j, c in enumerate(state):
+            for b in c:
+                bx, by = b
+                if by == 0 and bx == home_x:
                     y0_occ = True
-                    if b.color != a.color:
+                    if state_order[j] != state_order[i]:
                         y1_occ = True
-            if not (y0_occ and y1_occ):
-                if home_x in range(lb+1, sb):
-                    if y0_occ:
-                        neighbours[i].append((home_x, 1, e * number_moves(a.x, a.y, home_x, 1)))
-                    else:
-                        neighbours[i].append((home_x, 0, e * number_moves(a.x, a.y, home_x, 0)))
 
+        # Find the possible neighbour states for each occurance of color
+        for k, a in enumerate(lc):
+            x, y = a
+            lb, sb = find_blocking_pos(hallway_pos, a)
+
+            if y == 1 or (y == 0 and x not in home_blocks):
+                for xi in range(lb+1, sb):
+                    if xi in (0, 1, 3, 5, 7, 9, 10):
+                        ns = create_new_state(state, lc, i, k, (xi, 2))
+                        neighbours[ns] = e * number_moves(x, y, xi, 2)
+            elif y == 2:
+                if not (y0_occ and y1_occ):
+                    if home_x in range(lb+1, sb):
+                        if y0_occ:
+                            ns = create_new_state(state, lc, i, k, (home_x, 1))
+                            neighbours[ns] = e * number_moves(x, y, home_x, 1)
+                        else:
+                            ns = create_new_state(state, lc, i, k, (home_x, 0))
+                            neighbours[ns] = e * number_moves(x, y, home_x, 0)
     return neighbours
 
 
@@ -177,13 +196,6 @@ if __name__ == '__main__':
     neighbours : List of (state, delta energy)
     """
 
-    state_map = {
-        'A': 0,
-        'B': 1,
-        'C': 2,
-        'D': 3
-    }
-
     state_order = ('A', 'B', 'C', 'D')
 
     allowed_room_x = {
@@ -217,21 +229,24 @@ if __name__ == '__main__':
     }
 
     state = create_state(initial_state_dict, state_order)
+    print(state)
     print_state(state, state_order)
 
     final_state = create_state(final_state_dict, state_order)
-    print_state(final_state, state_order)
-
-    ####################################################################
 
     # # Do the known correct path manually
     # moves = [(5, 2), (3, 0), (3, 0), (2, 0), (5, 0), (1, 2), (1, 0), (7, 0), (6, 0), (7, 0), (2, 0), (6, 0)]  # index, move number
-    # total_energy = 0
-    # for move in moves:
-    #     neighbours = get_neighbours(state, allowed_room_x, energy_dict)
-    #     state, energy = make_move(state, neighbours, *move)
-    #     total_energy += energy
-    #     print_state(state)
+    neighbours = get_neighbours(state, state_order, allowed_room_x, energy_dict)
+
+    print('Neighbours:')
+    for state, energy in neighbours.items():
+        print(state)
+        print('Energy:', energy)
+        print_state(state, state_order)
+
+    # state, energy = make_move(state, neighbours, *move)
+    # total_energy += energy
+    # print_state(state)
     #
     # print('Total energy:', total_energy)
     #
