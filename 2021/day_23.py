@@ -4,28 +4,27 @@ import heapq
 import math
 
 
-@dataclass(frozen=False)
-class AmphipodState:
-    """ State for a single amphipod """
-    color: str
-    x: int
-    y: int
+# Full state is 8 * AmphipodState
+# todo: make this simpler, want to quickly check if states are the same and get parents, energy (hashable)
+# @dataclass(frozen=False)
+# class AmphipodState:
+#     """ State for a single amphipod """
+#     color: str
+#     x: int
+#     y: int
 
 
-def create_state(colors):
+def create_state(state_dict, state_order):
+
     state = []
-    xi = (2, 2, 4, 4, 6, 6, 8, 8)
-    yi = (0, 1, 0, 1, 0, 1, 0, 1)
-    for i, c in enumerate(colors):
-        state.append(AmphipodState(
-            color=c,
-            x=xi[i],
-            y=yi[i]
-        ))
+    for color in state_order:
+        state.append(frozenset(state_dict[color]))
+    state = tuple(state)
+
     return state
 
 
-def print_state(state):
+def print_state(state, state_order):
     ymax = 5
     xmax = 13
 
@@ -36,8 +35,10 @@ def print_state(state):
     for x in (3, 5, 7, 9):
         grid[2][x] = '.'
         grid[3][x] = '.'
-    for s in state:
-        grid[ymax-s.y-2][s.x+1] = s.color
+    for i, s in enumerate(state):
+        for e in s:
+
+            grid[ymax-e[1]-2][e[0]+1] = state_order[i]
 
     print('State:')
     for l in grid:
@@ -74,6 +75,7 @@ def get_neighbours(state, allowed_room_x, energy_dict):
     neighbours = defaultdict(list)  # index: (x, y, energy) tuples. Index is index in state list
     hallway_pos = get_hallway_positions(state)
 
+    # todo: Loop over both version of 'A', 'B' etc to see if new state possible
     for i, a in enumerate(state):
         e = energy_dict[a.color]
         home_x = allowed_room_x[a.color]
@@ -111,81 +113,78 @@ def make_move(state, neighbours, index, move_number):
     return state, energy
 
 
-def same_state(state_a, state_b):
-    # Return true if states are the same
-
-    # 8 amphipod state instances in each state
-    for a in state_a:
-        if a not in state_b:
-            return False
-
-    return True
-
-
-def initialise(matrix, start_node):
-    # Priority queue, results, visited
-
-    # DATA STRUCTURES
-    # Priority queue to quickly get min distance mode (min heap)
-    # todo: change names node -> state, distance -> energy
-    queue = [(0, start_node)]  # 0 distance to start node
-    heapq.heapify(queue)  # Not required
-
-    # Visited (set)
-    # todo: this should be a set ideally, or a list
-    r, c = len(matrix), len(matrix[0])
-    visited = [[0 for _ in range(c)] for _ in range(r)]
-
-    # Results dict (parent & distance)
-    # todo: how to do this - can't list all the possible states before hand
-    distances = [[math.inf for _ in range(c)] for _ in range(r)]
-    distances[start_node[0]][start_node[1]] = 0
-    parents = [[None for _ in range(c)] for _ in range(r)]
-
-    return queue, visited, distances, parents
-
-
-def dijkstra(matrix, moves, queue, visited, distances, parents):
-    # todo: see comments in initialse for what needs to change
-
-    while queue:
-        # Pop min element, add to visited, results
-        # Keep popping till find element not visited
-        found = False
-        dist, n = None, None
-        while not found:
-            dist, n = heapq.heappop(queue)
-            if not visited[n[0]][n[1]]:
-                found = True
-
-        # For neighbours
-        for neighbour in get_neighbours(matrix, n, moves):
-            # If new distance less than results distance then update results & push to queue
-            new_dist = dist + matrix[neighbour[0]][neighbour[1]]
-            old_dist = distances[neighbour[0]][neighbour[1]]
-            if new_dist < old_dist:
-                heapq.heappush(queue, (new_dist, neighbour))
-                parents[neighbour[0]][neighbour[1]] = n
-                distances[neighbour[0]][neighbour[1]] = new_dist
-
-    return distances, parents
+# def same_state(state_a, state_b):
+#     # Return true if states are the same
+#
+#     # 8 amphipod state instances in each state
+#     for a in state_a:
+#         if a not in state_b:
+#             return False
+#
+#     return True
+#
+#
+# def initialise(initial_state):
+#     # Priority queue, results, visited
+#
+#     # DATA STRUCTURES
+#     # Priority queue to quickly get min energy state (min heap)
+#     queue = [(0, initial_state)]  # 0 energy to start state
+#
+#     # Visited (set)
+#     visited = set()  # (state, energy, parent)
+#     visited.add((initial_state, 0, None))
+#
+#     return queue, visited
+#
+#
+# def dijkstra(matrix, moves, queue, visited, allowed_room_x, energy_dict):
+#     # todo: see comments in initialse for what needs to change
+#
+#     while queue:
+#         # Pop min element, add to visited, results
+#         # Keep popping till find element not visited
+#         found = False
+#         energy, state = None, None
+#         while not found:
+#             energy, state = heapq.heappop(queue)
+#             if state not in visited:
+#                 found = True
+#
+#         # For neighbours
+#         # todo: neighbour is a dict - need to iterate through keys & lists
+#         for neighbour in get_neighbours(state, allowed_room_x, energy_dict):
+#             # If new energy less than results energy then update results & push to queue
+#             new_energy = energy + neighbour[key][-1]
+#             old_energy = # todo need a quick lookup for the last energy of this state
+#             if new_energy < old_energy:
+#                 heapq.heappush(queue, (new_energy, neighbour))
+#                 parents[neighbour[0]][neighbour[1]] = n
+#                 distances[neighbour[0]][neighbour[1]] = new_energy
+#
+#     return distances, parents
 
 
 if __name__ == '__main__':
 
     """
-    Needed for Dijkstra:
-    
-    Structures:
-    - Priority queue for nodes (states) and energy
-    - List of visited states
-    - Energies to each stated in visited
-    - Parent state for each state in visited
-    
-    Functions:
-    - Compare 2 states
-    - Get neighbour states
+    Data structures:
+    state : Tuple of frozensets for 'A', 'B', ... (frozenset((x1, y1), (x2, y2)), frozenset((x1, y1), (x2, y2)), ...)
+    visited : set of states
+    energy : dictionary state : energy
+    parents : dictionary state : state
+    heap : tuples of (energy, state)
+    neighbours : List of (state, delta energy)
     """
+
+    state_map = {
+        'A': 0,
+        'B': 1,
+        'C': 2,
+        'D': 3
+    }
+
+    state_order = ('A', 'B', 'C', 'D')
 
     allowed_room_x = {
         'A': 2,
@@ -201,38 +200,40 @@ if __name__ == '__main__':
         'D': 1000,
     }
 
-    # initial state
-    colors = ['A', 'B', 'D', 'C', 'C', 'B', 'A', 'D']
-    state = create_state(colors)
-    print('Initial state:')
-    for a in state:
-        print(a)
-    print_state(state)
+    # initial & final states
+    # ((x1, y1), (x2, y2))
+    initial_state_dict = {
+        'A': ((2, 0), (8, 0)),
+        'B': ((2, 1), (6, 1)),
+        'C': ((4, 1), (6, 0)),
+        'D': ((4, 0), (8, 1)),
+    }
 
-    # Define final state
-    colors = ['A', 'A', 'B', 'B', 'C', 'C', 'D', 'D']
-    final_state = create_state(colors)
-    print('Final state:')
-    for a in state:
-        print(a)
-    print_state(final_state)
+    final_state_dict = {
+        'A': ((2, 0), (2, 1)),
+        'B': ((4, 0), (4, 1)),
+        'C': ((6, 0), (6, 1)),
+        'D': ((8, 0), (8, 1)),
+    }
 
-    # Try to do the correct path manually
-    moves = [(5, 2), (3, 0), (3, 0), (2, 0), (5, 0), (1, 2), (1, 0), (7, 0), (6, 0), (7, 0), (2, 0), (6, 0)]  # index, move number
-    total_energy = 0
-    printit = False
-    for move in moves:
-        neighbours = get_neighbours(state, allowed_room_x, energy_dict)
-        if printit:
-            for key, value in neighbours.items():
-                print(key, state[key])
-                print(value)
-        state, energy = make_move(state, neighbours, *move)
-        total_energy += energy
-        print('Energy used:', energy)
-        print_state(state)
+    state = create_state(initial_state_dict, state_order)
+    print_state(state, state_order)
 
-    print('Total energy:', total_energy)
+    final_state = create_state(final_state_dict, state_order)
+    print_state(final_state, state_order)
 
-    # Test checking state the same:
-    print('Same state?', same_state(state, final_state))
+    ####################################################################
+
+    # # Do the known correct path manually
+    # moves = [(5, 2), (3, 0), (3, 0), (2, 0), (5, 0), (1, 2), (1, 0), (7, 0), (6, 0), (7, 0), (2, 0), (6, 0)]  # index, move number
+    # total_energy = 0
+    # for move in moves:
+    #     neighbours = get_neighbours(state, allowed_room_x, energy_dict)
+    #     state, energy = make_move(state, neighbours, *move)
+    #     total_energy += energy
+    #     print_state(state)
+    #
+    # print('Total energy:', total_energy)
+    #
+    # # Test checking state the same:
+    # print('Same state?', same_state(state, final_state))
