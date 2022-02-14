@@ -49,8 +49,6 @@ def get_blocks(state):
         8: set()
     }
 
-    # [2, 4, 6, 8]
-
     blocks_hallway = set()
     for i, color in enumerate(state):
         for a in color:
@@ -196,8 +194,6 @@ def get_shortest_path(parent_dict, final_state):
 
 
 if __name__ == '__main__':
-    SEARCH = True
-
     state_order = ('A', 'B', 'C', 'D')
 
     allowed_room_x = {
@@ -213,15 +209,6 @@ if __name__ == '__main__':
         'C': 100,
         'D': 1000,
     }
-
-    # initial & final states
-    # ((x1, y1), (x2, y2))
-    # initial_state_dict = {
-    #     'A': ((2, 0), (8, 0), (6, 1), (8, 2)),
-    #     'B': ((2, 3), (6, 3), (4, 1), (6, 2)),
-    #     'C': ((4, 3), (6, 0), (4, 2), (8, 1)),
-    #     'D': ((4, 0), (8, 3), (2, 1), (2, 2)),
-    # }
 
     initial_state_dict = {
         'A': ((4, 3), (8, 0), (6, 1), (8, 2)),
@@ -242,47 +229,16 @@ if __name__ == '__main__':
     print(state)
     print_state(state, state_order)
     final_state = create_state(final_state_dict, state_order)
-    #
-    # states = [
-    #     (frozenset({(2, 0), (6, 1), (8, 0), (8, 2)}), frozenset({(6, 3), (6, 2), (4, 1), (2, 3)}), frozenset({(8, 1), (4, 2), (6, 0), (4, 3)}), frozenset({(4, 0), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (6, 1), (8, 0), (0, 4)}), frozenset({(6, 3), (6, 2), (4, 1), (2, 3)}), frozenset({(8, 1), (4, 2), (6, 0), (4, 3)}), frozenset({(4, 0), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (6, 1), (8, 0), (0, 4)}), frozenset({(6, 2), (4, 1), (9, 4), (2, 3)}), frozenset({(8, 1), (4, 2), (6, 0), (4, 3)}), frozenset({(4, 0), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (6, 1), (8, 0), (0, 4)}), frozenset({(7, 4), (4, 1), (9, 4), (2, 3)}), frozenset({(8, 1), (4, 2), (6, 0), (4, 3)}), frozenset({(4, 0), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (8, 0), (1, 4), (0, 4)}), frozenset({(7, 4), (4, 1), (9, 4), (2, 3)}), frozenset({(8, 1), (4, 2), (6, 0), (4, 3)}), frozenset({(4, 0), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (8, 0), (1, 4), (0, 4)}), frozenset({(7, 4), (4, 1), (9, 4), (2, 3)}), frozenset({(8, 1), (4, 2), (5, 4), (6, 0)}), frozenset({(4, 0), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (8, 0), (1, 4), (0, 4)}), frozenset({(7, 4), (4, 1), (9, 4), (2, 3)}), frozenset({(8, 1), (4, 2), (6, 1), (6, 0)}), frozenset({(4, 0), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (8, 0), (1, 4), (0, 4)}), frozenset({(7, 4), (4, 1), (9, 4), (2, 3)}), frozenset({(8, 1), (5, 4), (6, 0), (6, 1)}), frozenset({(4, 0), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (8, 0), (1, 4), (0, 4)}), frozenset({(7, 4), (4, 1), (9, 4), (2, 3)}), frozenset({(8, 1), (6, 1), (6, 2), (6, 0)}), frozenset({(4, 0), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (8, 0), (1, 4), (0, 4)}), frozenset({(7, 4), (5, 4), (2, 3), (9, 4)}), frozenset({(8, 1), (6, 1), (6, 2), (6, 0)}), frozenset({(4, 0), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (8, 0), (1, 4), (0, 4)}), frozenset({(7, 4), (5, 4), (2, 3), (9, 4)}), frozenset({(8, 1), (6, 1), (6, 2), (6, 0)}), frozenset({(3, 4), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (8, 0), (1, 4), (0, 4)}), frozenset({(7, 4), (2, 3), (9, 4), (4, 0)}), frozenset({(8, 1), (6, 1), (6, 2), (6, 0)}), frozenset({(3, 4), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (8, 0), (1, 4), (0, 4)}), frozenset({(4, 0), (4, 1), (9, 4), (2, 3)}), frozenset({(8, 1), (6, 1), (6, 2), (6, 0)}), frozenset({(3, 4), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (8, 0), (1, 4), (0, 4)}), frozenset({(4, 2), (4, 1), (2, 3), (4, 0)}), frozenset({(8, 1), (6, 1), (6, 2), (6, 0)}), frozenset({(3, 4), (10, 4), (2, 1), (2, 2)})),
-    #     (frozenset({(2, 0), (8, 0), (1, 4), (0, 4)}), frozenset({(2, 3), (4, 2), (4, 1), (4, 0)}), frozenset({(7, 4), (6, 1), (6, 2), (6, 0)}), frozenset({(3, 4), (10, 4), (2, 1), (2, 2)}))
-    # ]
-    #
-    # print('INITIAL STATE:')
-    # # state = states[-1]
-    # state = (frozenset({(5, 4), (6, 1), (4, 3), (0, 4)}), frozenset({(2, 0), (6, 2), (4, 1), (6, 0)}), frozenset({(4, 2), (10, 4), (9, 4), (4, 0)}), frozenset({(6, 3), (7, 4), (8, 0), (8, 1)}))
-    # print(state)
-    # print_state(state, state_order)
-    #
-    #
-    # print('NEIGHBOUR STATES:')
-    # for neighbour, energy_delta in get_neighbours(state, state_order, allowed_room_x, energy_lookup).items():
-    #     print(neighbour)
-    #     print_state(neighbour, state_order)
 
-    if SEARCH:
-        # Do the search algorithm
-        queue, visited, energy_dict, parent_dict = initialise(state)
-        energy_dict, parent_dict = dijkstra(queue, visited, energy_dict, parent_dict, allowed_room_x, energy_lookup, state_order, final_state)
+    # Do the search algorithm
+    queue, visited, energy_dict, parent_dict = initialise(state)
+    energy_dict, parent_dict = dijkstra(queue, visited, energy_dict, parent_dict, allowed_room_x, energy_lookup, state_order, final_state)
 
-        print('Minimum energy to get to final state:')
-        print(energy_dict[final_state])
+    print('Minimum energy to get to final state:')
+    print(energy_dict[final_state])
 
-        # Get the path taken
-        shortest_path = get_shortest_path(parent_dict, final_state)
-        for state in shortest_path:
-            print(state)
-            print_state(state, state_order)
+    # Get the path taken
+    shortest_path = get_shortest_path(parent_dict, final_state)
+    for state in shortest_path:
+        print(state)
+        print_state(state, state_order)
