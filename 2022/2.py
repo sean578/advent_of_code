@@ -21,7 +21,7 @@ if __name__ == '__main__':
         'C': 'A'
     }
 
-    win = {value:key for key, value in lose.items()}
+    win = {value: key for key, value in lose.items()}
 
     # part 1
     lines = [line.strip() for line in open("2_input.txt", 'r').readlines()]
@@ -29,7 +29,14 @@ if __name__ == '__main__':
     total = 0
     for line in lines:
         opponent, me = line.split()
-        me = convert[me]
+
+        if me == 'X':
+            me = win[opponent]
+        elif me == 'Y':
+            me = opponent
+        elif me == 'Z':
+            me = lose[opponent]
+
         total += score[me]
         if me == opponent:
             total += 3
