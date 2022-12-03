@@ -20,3 +20,24 @@ if __name__ == '__main__':
         total_priority += priority
 
     print(total_priority)
+
+    # part 2
+    total_priority = 0
+    for i in range(0, len(lines), 3):
+        a = set(lines[i+0])
+        b = set(lines[i+1])
+        c = set(lines[i+2])
+
+        both = a.intersection(b).intersection(c)
+        assert len(both) == 1
+        both = both.pop()
+        if both.isupper():
+            priority = ord(both) - 65 + 27
+        elif both.islower():
+            priority = ord(both) - 97 + 1
+        else:
+            print('ERROR')
+
+        total_priority += priority
+
+    print(total_priority)
