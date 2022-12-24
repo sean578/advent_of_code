@@ -32,16 +32,18 @@ if __name__ == '__main__':
     for pile, boxes in piles.items():
         print(pile, boxes)
 
-    # print("Instructions:")
-    # for i in instructions:
-    #     print(i)
-
     # When moving pop and append from end of list 1 item at a time
     for i in instructions:
         num, a, b = i
+        # part 1
+        # for _ in range(num):
+        #     t = piles[a].pop()
+        #     piles[b].append(t)
+        # part 2
+        t = piles[a][-num:]
         for _ in range(num):
-            t = piles[a].pop()
-            piles[b].append(t)
+            piles[a].pop()
+        piles[b].extend(t)
 
     print("Finish:")
     for pile, boxes in piles.items():
@@ -50,4 +52,4 @@ if __name__ == '__main__':
     answer = []
     for i in range(1, 10, 1):
         answer.append(piles[i].pop())
-    print("Answer part 1", "".join(answer))
+    print("Answer", "".join(answer))
