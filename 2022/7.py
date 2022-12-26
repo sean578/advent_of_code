@@ -56,9 +56,36 @@ def create_graph(lines):
 if __name__ == '__main__':
 
     lines = [line.strip() for line in open("7_input.txt").readlines()]
-    nodes = create_graph(lines)
 
-    print("node list:")
-    for key, value in nodes.items():
-        print(key, value.directory, value.size, [i.name for i in value.children])
+    # Stack that holds each directory that contains the current file/directory
+    dir_stack = []
 
+    # Dictionary holding the size of each directory
+    sizes = {}
+
+    # Directories defined by cd <dir-name>
+    # Pop the stack if cd .. found (no longer looking at items in that directory)
+    # If a file (with a size) then add to sizes of all directories in stack
+    # Use the index to define the directory rather than the name as can have the same name in different locations
+    for i, line in enumerate(lines):
+        if line == "$ cd ..":
+            dir_stack.pop()
+        elif line == "$ ls" or line[0:3] == "dir":
+            continue
+        elif line[0:4] == "$ cd":
+            _, n = line.split("cd ")
+            dir_stack.append(i)
+            if i not in sizes:
+                sizes[i] = 0
+        else:
+            # file found
+            s, _ = line.split()
+            for d in dir_stack:
+                sizes[d] += int(s)
+
+    result = 0
+    for v in sizes.values():
+        if v <= 100000:
+            result += v
+
+    print(result)
