@@ -88,4 +88,20 @@ if __name__ == '__main__':
         if v <= 100000:
             result += v
 
-    print(result)
+    print(f"Part 1: {result}")
+
+    ROOT = 0
+
+    total_space = 70000000
+    required_space = 30000000
+
+    unused_space = total_space - sizes[ROOT]
+    required_room = required_space - unused_space
+    assert required_room > 0, required_room
+
+    min_deletion_size = total_space
+    for s in sizes.values():
+        if s >= required_room and s <= min_deletion_size:
+            min_deletion_size = s
+
+    print(f"Part 2: {min_deletion_size}")
