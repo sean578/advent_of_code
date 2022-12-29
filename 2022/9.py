@@ -38,10 +38,10 @@ if __name__ == '__main__':
     ms = [line.strip().split(" ") for line in open("9_input.txt").readlines()]
     moves = [[m[0], int(m[1])] for m in ms]
 
-    h, t = [0, 0], [0, 0]
+    h, t = [0, 0], [[0, 0] for _ in range(9)]
 
     tails_pos_history = set()
-    tails_pos_history.add(tuple(t))
+    tails_pos_history.add(tuple(t[-1]))
 
     for m in moves:
         direction, steps = m
@@ -57,7 +57,11 @@ if __name__ == '__main__':
             else:
                 raise "Incorrect direction"
 
-            t = update_tail(h, t)
-            tails_pos_history.add(tuple(t))
+            for i in range(9):
+                if i == 0:
+                    t[i] = update_tail(h, t[i])
+                else:
+                    t[i] = update_tail(t[i-1], t[i])
+            tails_pos_history.add(tuple(t[-1]))
 
     print(len(tails_pos_history))
