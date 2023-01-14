@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     num_inspections = [0]*len(monkeys)
 
-    for r in range(1, 21, 1):
+    for r in range(1, 10000 + 1, 1):
         # print(f"Round {r}")
         for mn, m in enumerate(monkeys):
             for item in m['items']:
@@ -25,7 +25,8 @@ if __name__ == '__main__':
                 # get new worry level of item in 'new' variable
                 new = -99
                 exec(m['operation'])
-                new = new // 3
+                # new = new // 3
+                new = new % 9699690
                 if new % m['test'] == 0:
                     monkeys[m['true']]['items'].append(new)
                 else:
@@ -35,4 +36,5 @@ if __name__ == '__main__':
         # for i, m in enumerate(monkeys):
         #     print(f"{i}: {m['items']}")
 
+    print(num_inspections)
     print(sorted(num_inspections)[-1] * sorted(num_inspections)[-2])
