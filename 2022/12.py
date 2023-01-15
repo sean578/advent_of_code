@@ -1,12 +1,13 @@
-import copy
 import numpy as np
 
 
 def get_start_index(elevation_map):
-    start = 'S'
+    start, lowest = 'S', 'a'
     start_index = np.argwhere(elevation_map == start)
     assert start_index.shape == (1, 2)
-    start_index = tuple(start_index[0, :])
+    start_index = [tuple(start_index[0, :])]
+    low_index = [tuple(i) for i in np.argwhere(elevation_map == lowest)]
+    start_index.extend(low_index)
     return start_index
 
 
@@ -45,7 +46,7 @@ def possible_moves(start_index, elevation_map, visited):
     return end_indices
 
 
-def bfs(start_index, elevation_map):
+def bfs(start_index, elevation_map, stop):
 
     layer = -1
     finished = False
@@ -54,9 +55,8 @@ def bfs(start_index, elevation_map):
 
     while not finished:
         layer += 1
-        print(f"Layer: {layer}")
-        print(f"Boundary size = {len(boundary)}")
-        print(f"Boundary = {boundary}")
+        if layer > stop:
+            return 999999999
         # If the end index is in the list of possible moves then we are done
         new_boundary = []
         for pos in boundary:
@@ -83,5 +83,13 @@ if __name__ == '__main__':
     # Could have cycles...don't want to visit the same location twice
     # Don't need the path, just the number of steps
 
+
     start_index = get_start_index(elevation_map)
-    print(bfs(start_index, elevation_map))
+    lowest = 999999
+    for i, si in enumerate(start_index):
+        print(i / len(start_index))
+        path_length = bfs(si, elevation_map, lowest)
+        if path_length < lowest:
+            lowest = path_length
+
+    print(lowest)
