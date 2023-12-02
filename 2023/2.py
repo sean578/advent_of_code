@@ -1,3 +1,6 @@
+from functools import reduce
+
+
 def structure_input(lines):
     games_raw = [line.split(": ")[1].split("; ") for line in lines]
     games = []
@@ -16,35 +19,17 @@ def structure_input(lines):
 
 if __name__ == '__main__':
     lines = [line.strip() for line in open("2_input.txt", 'r').readlines()]
-
-    # lines = [
-    #     "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green",
-    #     "Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue",
-    #     "Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red",
-    #     "Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red",
-    #     "Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"
-    # ]
-
     games = structure_input(lines)
 
-    allowed = {
-        "red": 12,
-        "green": 13,
-        "blue": 14
-    }
-
-    valid_ids_total = 0
-    # valid_ids = []  # debug
-    for i, g in enumerate(games, 1):
-        valid = True
+    powers_total = 0
+    for g in games:
+        fewest_cubes = {"red": 0, "green": 0, "blue": 0}
         for r in g:
             for color, num in r.items():
-                if allowed[color] < num:
-                    valid = False
+                if fewest_cubes[color] < num:
+                    fewest_cubes[color] = num
 
-        if valid:
-            valid_ids_total += i
-            # valid_ids.append(i)  # debug
+        power = reduce((lambda x, y: x * y), fewest_cubes.values())
+        powers_total += power
 
-    # print(valid_ids)
-    print(valid_ids_total)
+    print(powers_total)
