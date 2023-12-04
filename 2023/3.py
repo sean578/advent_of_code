@@ -49,9 +49,6 @@ if __name__ == '__main__':
         # Regex to get value & spans of all numbers in line (no overlap)
         numbers = list(re.finditer(r"\d+", middle))
 
-        # todo: if I use this dict below & sum over keys then sum is too low...why?!
-        # numbers_dict = {int(n.group()): n.span() for n in numbers}
-
         numbers_list = [int(n.group()) for n in numbers]
         spans_list = [n.span() for n in numbers]
 
