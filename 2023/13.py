@@ -16,31 +16,54 @@ def read_grids(lines):
     return grids
 
 
-def get_reflections(grid):
-    num_rows = grid.shape[0]
-    valid = []
+def find_smudge(grid):
+    # part 2
 
-    # Get indices of repeating consecutive lines
+    # Find consecutive matching rows that match or are off by one
+    matching_rows = grid[:-1, :] == grid[1:, :]
+    close_rows = np.where(np.count_nonzero(matching_rows == 0, axis=1) <= 1)
+    if close_rows[0].shape == (0,):
+        return False
+    # indices of row before possible reflection line
+    close_rows = close_rows[0]
+
+    # Check if a reflection line that requires one change is found from above
+    for close_row in close_rows:
+        top = grid[:close_row + 1]
+        bottom = grid[close_row + 1:]
+        top_reversed = top[::-1]
+        min_length = min(top.shape[0], bottom.shape[0])
+        same = top_reversed[:min_length, :] == bottom[:min_length, :]
+        if np.count_nonzero(same == 0) == 1:
+            return close_row
+    return False
+
+
+def get_reflection(grid):
+    # part 1
+    valid = []
     matching_rows = np.where(np.all(grid[:-1, :] == grid[1:, :], axis=1))
     if matching_rows[0].shape == (0,):
         return valid
+    # indices of row before possible reflection line
     matching_rows = matching_rows[0]
 
     # Check if reflections
     for matching_row in matching_rows:
-        if matching_row >= num_rows // 2:
-            grid = grid[::-1][:]
-            matching_row_reversed = num_rows - matching_row - 2
-        else:
-            matching_row_reversed = matching_row
-        if np.all(
-                grid[:matching_row_reversed+1, :][::-1] ==
-                grid[matching_row_reversed+1:matching_row_reversed + matching_row_reversed+2, :]
-        ):
-            valid.append(matching_row)
+        top = grid[:matching_row + 1]
+        bottom = grid[matching_row + 1:]
 
-    assert len(valid) <= 1
+        top_reversed = top[::-1]
+        min_length = min(top.shape[0], bottom.shape[0])
+        same = top_reversed[:min_length, :] == bottom[:min_length, :]
+        if np.all(same):
+            valid.append(matching_row)
     return valid
+
+
+def print_numpy(grid):
+    for row in grid.tolist():
+        print("".join(row))
 
 
 if __name__ == '__main__':
@@ -51,15 +74,14 @@ if __name__ == '__main__':
     all_row_reflections = []
     all_column_reflections = []
     for i, grid in enumerate(grids):
-        reflection = get_reflections(np.array(grid))
-        all_row_reflections.extend(reflection)
-        if len(reflection) > 0:
-            continue
-        reflection = get_reflections(np.array(grid).T)
-        all_column_reflections.extend(reflection)
-        if len(reflection) == 0:
-            print(np.array(grid))
-            assert False,  f"{i}"
+        grid = np.array(grid)
+        close_rows = find_smudge(grid)
+        if close_rows is not False:
+            all_row_reflections.append(close_rows)
+        else:
+            close_col = find_smudge(grid.T)
+            if close_col is not False:
+                all_column_reflections.append(close_col)
 
     answer = sum([i+1 for i in all_column_reflections]) + 100 * sum(i+1 for i in all_row_reflections)
-    print(answer)
+    print("answer", answer)
