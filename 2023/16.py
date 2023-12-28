@@ -81,40 +81,57 @@ def print_grid(grid):
     print()
 
 
+def all_starting_points(grid_shape):
+
+    top_row = [([0, i], "d") for i in range(grid_shape[1])]
+    bottom_row = [([grid_shape[0] - 1, i], "u") for i in range(grid_shape[1])]
+    left_column = [([i, 0], "r") for i in range(grid_shape[0])]
+    right_column = [([i, grid_shape[1] - 1], "l") for i in range(grid_shape[0])]
+
+    return top_row + bottom_row + left_column + right_column
+
+
 if __name__ == '__main__':
     grid = [list(line.strip()) for line in open("16_input.txt").readlines()]
     # print_grid(grid)
     grid_shape = (len(grid), len(grid[0]))
 
-    starting_point_queue = [([0, 0], "r")]
-    locations_visited = set()
-    location_and_direction_visited = set()
+    # starting_point_queue = [([0, 0], "r")]  # part 1
+    best = 0
+    for starting_point in all_starting_points(grid_shape):
+        starting_point_queue = [starting_point]
 
-    while len(starting_point_queue) > 0:
-        location, direction = starting_point_queue.pop()
-        if not location:
-            break
+        locations_visited = set()
+        location_and_direction_visited = set()
 
-        # Keep moving until beam has left the grid
-        while True:
-            # Stop if we have been at the location in this direction before (cycles)
-            if (tuple(location), direction) in location_and_direction_visited:
-                break
-
-            locations_visited.add(tuple(location))
-            location_and_direction_visited.add((tuple(location), direction))
-
-            direction_change = change_direction(direction, grid[location[0]][location[1]])
-            direction, starting_point_direction = direction_change
-            location_original = copy.deepcopy(location)
-            location = move(direction, location, grid_shape)
-
-            if starting_point_direction is not None:
-                new_starting_point_location = move(starting_point_direction, location_original, grid_shape)
-                starting_point_queue.insert(
-                    0, (new_starting_point_location, starting_point_direction)
-                )
+        while len(starting_point_queue) > 0:
+            location, direction = starting_point_queue.pop()
             if not location:
                 break
 
-    print(len(locations_visited))
+            # Keep moving until beam has left the grid
+            while True:
+                # Stop if we have been at the location in this direction before (cycles)
+                if (tuple(location), direction) in location_and_direction_visited:
+                    break
+
+                locations_visited.add(tuple(location))
+                location_and_direction_visited.add((tuple(location), direction))
+
+                direction_change = change_direction(direction, grid[location[0]][location[1]])
+                direction, starting_point_direction = direction_change
+                location_original = copy.deepcopy(location)
+                location = move(direction, location, grid_shape)
+
+                if starting_point_direction is not None:
+                    new_starting_point_location = move(starting_point_direction, location_original, grid_shape)
+                    starting_point_queue.insert(
+                        0, (new_starting_point_location, starting_point_direction)
+                    )
+                if not location:
+                    break
+
+        if len(locations_visited) > best:
+            best = len(locations_visited)
+
+    print(best)
