@@ -1,10 +1,10 @@
 import heapq
 
 
-def adjacent(current_node, grid_shape, direction, forward_moves):
+def adjacent(current_node, grid_shape, direction, forward_moves, NUM_ALLOWED_FORWARD=10, MINIMUM_NUM_FORWARD=4):
 
     assert direction in ("u", "d", "l", "r"), f"{direction}"
-    assert forward_moves <= 3
+    assert forward_moves <= NUM_ALLOWED_FORWARD
 
     opposites = {
         "u": "d",
@@ -22,8 +22,11 @@ def adjacent(current_node, grid_shape, direction, forward_moves):
 
     # Can't go in opposite direction
     del deltas[opposites[direction]]
-    # If have moved forward 3 times, can't go forward again
-    if forward_moves == 3:
+    # If haven't moved forward MINIMUM_NUM_FORWARD times, have to go forward
+    if forward_moves < MINIMUM_NUM_FORWARD:
+        deltas = {direction: deltas[direction]}
+    # If have moved forward NUM_ALLOWED_FORWARD times, can't go forward again
+    if forward_moves == NUM_ALLOWED_FORWARD:
         del deltas[direction]
 
     new_nodes = []
@@ -45,15 +48,14 @@ def adjacent(current_node, grid_shape, direction, forward_moves):
         else:
             new_num_forwards.append(1)
 
-    # not required
-    for f in new_num_forwards:
-        assert f <= 3
-
     # List of neighboring nodes, the direction they will be reached, the number of forward moves to get there
     return zip(new_nodes, new_directions, new_num_forwards)
 
 
 if __name__ == '__main__':
+    NUM_ALLOWED_FORWARD = 10
+    MINIMUM_NUM_FORWARD = 4
+
     grid = [[int(i) for i in row.strip()] for row in open("17_input.txt").readlines()]
     grid_shape = (len(grid), len(grid[0]))
 
@@ -73,8 +75,9 @@ if __name__ == '__main__':
 
         # If this is the final node then we are done
         if current_node_coord == (grid_shape[0] - 1, grid_shape[1] - 1):
-            print(current_node_distance)
-            break
+            if current_node_num_forwards >= 4:
+                print(current_node_distance)
+                break
 
         # If we have already visited then we need to pop again
         if (current_node_coord, current_node_num_forwards, current_node_direction) in visited:
@@ -82,7 +85,14 @@ if __name__ == '__main__':
         visited.add((current_node_coord, current_node_num_forwards, current_node_direction))
 
         # Iterate through neighbours of current node
-        for neighbour in adjacent(current_node_coord, grid_shape, current_node_direction, current_node_num_forwards):
+        for neighbour in adjacent(
+                current_node_coord,
+                grid_shape,
+                current_node_direction,
+                current_node_num_forwards,
+                NUM_ALLOWED_FORWARD,
+                MINIMUM_NUM_FORWARD
+        ):
             node, direction, num_forwards = neighbour
             proposed_distance = grid[node[0]][node[1]] + current_node_distance
             # Always add to the queue - if a greater distance than won't be popped (could keep a grid of the best distances so far to keep queue shorter)
