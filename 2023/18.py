@@ -20,7 +20,7 @@ def create_map(lines):
             }
         )
 
-    pos = (0, 0)  # row, col
+    pos = (78, 0)  # row, col, # Played around with this to get looking even
     rows = defaultdict(list)
     rows[pos[0]].append(pos[1])
 
@@ -49,7 +49,7 @@ def print_grid(grid):
         print("".join(row))
 
 
-def flood_fill(grid, coord_start=(1, 1)):
+def flood_fill(grid, grid_shape, coord_start=(1, 1)):
     queue = [coord_start]
     while len(queue) > 0:
         coord = queue.pop(0)
@@ -64,9 +64,8 @@ def flood_fill(grid, coord_start=(1, 1)):
         # Call function all all valid neighbours
         for delta in DIRECTIONS.values():
             new_coord = (coord[0] + delta[0], coord[1] + delta[1])
-            # circular so don't worry about edges
-            # if 0 <= new_coord[0] < grid_shape[0] and 0 <= new_coord[1] < grid_shape[1]:
-            queue.append(new_coord)
+            if 0 <= new_coord[0] < grid_shape[0] and 0 <= new_coord[1] < grid_shape[1]:
+                queue.append(new_coord)
 
     return grid
 
@@ -84,9 +83,10 @@ if __name__ == '__main__':
     lines = [line.strip().split() for line in open("18_input.txt").readlines()]
 
     grid = create_map(lines)
-    grid = flood_fill(grid, coord_start=(1, 1))
-    # print()
-    # print_grid(grid)
+    grid_shape = (len(grid), len(grid[0]))
+
+    print_grid(grid)
+    grid = flood_fill(grid, grid_shape, coord_start=(100, 100))  # Played with start to get inside
 
     total = count(grid)
     print(total)
