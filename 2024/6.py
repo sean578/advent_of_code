@@ -95,8 +95,7 @@ def part_2(map):
             # row, col, direction
             states = set()
             if map[row_index][col_index] == "." and (row_index, col_index) != current_initial.location:
-                map_this_loop = copy.deepcopy(map)
-                map_this_loop[row_index][col_index] = "#"
+                map[row_index][col_index] = "#"
             else:
                 continue
 
@@ -106,6 +105,7 @@ def part_2(map):
                 current_state = (current.location[0], current.location[1], current.direction)
                 if current_state in states:
                     loops += 1
+                    map[row_index][col_index] = "."
                     break
                 states.add(current_state)
 
@@ -120,9 +120,10 @@ def part_2(map):
                     # if we would leave the map, then we are done
                     if proposed[0] < 0 or proposed[1] < 0 or proposed[0] >= len(map) or proposed[1] >= len(map[0]):
                         done = True
+                        map[row_index][col_index] = "."
                         break
                     # if we can move in this direction, do so
-                    if map_this_loop[proposed[0]][proposed[1]] == ".":
+                    if map[proposed[0]][proposed[1]] == ".":
                         current = Current(proposed, current.direction)
                         break
                     # if not, try the next direction
