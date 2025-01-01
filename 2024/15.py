@@ -151,10 +151,6 @@ def make_larger_map(the_map):
 
 def make_move(the_map, move, robot, i):
 
-    DEBUG = False
-    if i == 21:
-        DEBUG = True
-
     rows = len(the_map)
     cols = len(the_map[0])
 
@@ -233,18 +229,12 @@ def make_move(the_map, move, robot, i):
         # keep track of what move entails.
         pushing = []
 
-        print("pushing_cols", pushing_cols)
         while pushing_cols:
 
             next_pushing_cols = set()
             pushed_locations = set()
-            print("--")
-            print("pushing_cols", pushing_cols)
             for c in pushing_cols:
                 proposed = the_map[row][c]
-
-                if DEBUG:
-                    print("c", c, "proposed:", proposed)
 
                 if proposed == "#":
                     # We can never push a box into a wall so we can't do the move
@@ -273,10 +263,8 @@ def make_move(the_map, move, robot, i):
 
         # do the move if was allowed
         if ok:
-            print("Doing the push...")
             old_map = copy.deepcopy(the_map)
             for push in pushing:
-                print(push)
                 for col_to_update in push[2]:
                     if col_to_update in push[1]:
                         the_map[push[0]][col_to_update] = old_map[push[0]+1][col_to_update]
@@ -292,13 +280,13 @@ def make_move(the_map, move, robot, i):
         # todo: use a normal queue for pushing_cols
         ok = True
 
-        # keep track of what move entails. Tuple of ((coord), new value)
-        to_move = {
-            (row - 1, proposed_coord[1]): "."
-        }
+        # keep track of what move entails.
+        pushing = []
 
         while pushing_cols:
+
             next_pushing_cols = set()
+            pushed_locations = set()
             for c in pushing_cols:
                 proposed = the_map[row][c]
 
@@ -308,21 +296,20 @@ def make_move(the_map, move, robot, i):
                     break
                 elif proposed == ".":
                     # Pushing this is ok so move on to checking the next pushing column
-                    to_move[(row, c)] = the_map[row - 1][c]
+                    pushed_locations.add(c)
                     continue
                 elif proposed == "[":
                     next_pushing_cols.update({c, c + 1})
-                    to_move[(row, c)] = the_map[row - 1][c]
-                    to_move[(row, c+1)] = "."
+                    pushed_locations.update({c, c + 1})
                 elif proposed == "]":
                     next_pushing_cols.update({c, c - 1})
-                    to_move[(row, c)] = the_map[row - 1][c]
-                    to_move[(row, c-1)] = "."
+                    pushed_locations.update({c, c - 1})
                 else:
                     assert False
             else:
                 # if we reach the end of the for loop then will go to the next iteration of the while loop
                 # if we have broken out of the for loop, we will also break out of the while loop
+                pushing.append((row, pushing_cols, pushed_locations))
                 pushing_cols = next_pushing_cols
                 row = row + 1
                 continue
@@ -330,8 +317,14 @@ def make_move(the_map, move, robot, i):
 
         # do the move if was allowed
         if ok:
-            for coord, val in to_move.items():
-                the_map[coord[0]][coord[1]] = val
+            old_map = copy.deepcopy(the_map)
+            for push in pushing:
+                for col_to_update in push[2]:
+                    if col_to_update in push[1]:
+                        the_map[push[0]][col_to_update] = old_map[push[0]-1][col_to_update]
+                    else:
+                        the_map[push[0]][col_to_update] = "."
+            the_map[robot[0]][robot[1]] = "."
             robot = proposed_coord
 
     return the_map, robot
@@ -342,21 +335,10 @@ def part_2(the_map, moves):
     # make the new, larger map
     the_map = make_larger_map(the_map)
 
-    print("Initial:")
-    for row in the_map:
-        print("".join(row))
-
     robot = get_initial_position(the_map)
 
     for i, move in enumerate(moves):
-        print()
-        print(f"Move {i}:", move)
         the_map, robot = make_move(the_map, move, robot, i)
-
-        for row in the_map:
-            print("".join(row))
-        if i == 21:
-            break
 
     rows = len(the_map)
     cols = len(the_map[0])
